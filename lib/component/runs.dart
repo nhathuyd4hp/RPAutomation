@@ -5,6 +5,24 @@ class RunsManagement extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(children: [Text("Runs")]);
+    return IconButton(
+      icon: const Icon(FluentIcons.search),
+      onPressed: () {
+        displayInfoBar(
+          context,
+          builder: (context, close) {
+            return InfoBar(
+              title: const Text('Đang tìm kiếm...'),
+              content: const Text('Hệ thống đang quét dữ liệu robot.'),
+              action: IconButton(
+                icon: const Icon(FluentIcons.clear),
+                onPressed: close,
+              ),
+              severity: InfoBarSeverity.info,
+            );
+          },
+        );
+      },
+    );
   }
 }

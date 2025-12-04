@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 
 enum AppPage { robot, runs, schedule }
 
-class PageState extends ChangeNotifier {
+class PageProvider extends ChangeNotifier {
   AppPage currentPage = AppPage.robot;
 
   void setPage(AppPage page) {

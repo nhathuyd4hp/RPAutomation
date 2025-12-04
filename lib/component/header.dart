@@ -7,14 +7,17 @@ class Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pageState = context.read<PageState>();
+    final pageState = context.read<PageProvider>();
     return Container(
       height: 75,
       padding: EdgeInsets.symmetric(horizontal: 25),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text("Robot Managament"),
+          Text(
+            "Robot Managament",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
+          ),
           Row(
             spacing: 20,
             mainAxisAlignment: MainAxisAlignment.spaceAround,

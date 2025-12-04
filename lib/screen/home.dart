@@ -6,30 +6,26 @@ import "../component/robot.dart";
 import "../component/schedule.dart";
 import "../component/runs.dart";
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+class Main extends StatelessWidget {
+  const Main({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final page = context.watch<PageState>();
+    final page = context.watch<PageProvider>();
 
     return ScaffoldPage(
       padding: EdgeInsets.all(0),
       header: const Header(),
-      content: SafeArea(
-        child: Center(
-          child: LayoutBuilder(
-            builder: (BuildContext context, BoxConstraints _) {
-              if (page.getPage() == AppPage.runs) {
-                return RunsManagement();
-              } else if (page.getPage() == AppPage.schedule) {
-                return ScheduleManagement();
-              } else {
-                return RobotManagement();
-              }
-            },
-          ),
-        ),
+      content: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints _) {
+          if (page.getPage() == AppPage.runs) {
+            return RunsManagement();
+          } else if (page.getPage() == AppPage.schedule) {
+            return ScheduleManagement();
+          } else {
+            return RobotManagement();
+          }
+        },
       ),
     );
   }
