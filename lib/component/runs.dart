@@ -135,6 +135,10 @@ class _RunsManagementState extends State<RunsManagement> {
                 run.robot.replaceAll("_", " ").split(".").last.toUpperCase(),
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
+              Text(
+                run.createdAt,
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
             ],
           ),
           FilledButton(
