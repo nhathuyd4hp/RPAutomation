@@ -72,4 +72,15 @@ class ServerProvider extends ChangeNotifier {
     await Future.delayed(Duration(seconds: 5)); // Kết nối lại sau 5s
     await _connect(url);
   }
+
+  // Bắn thông báo
+  void notification(String message) {
+    _latestMessage = message;
+    notifyListeners();
+  }
+
+  void warning(String message) {
+    _errorMessage = message;
+    notifyListeners();
+  }
 }

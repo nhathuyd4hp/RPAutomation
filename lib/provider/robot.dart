@@ -6,6 +6,7 @@ import "../model/robot.dart";
 class RobotProvider extends ChangeNotifier {
   //
   final RobotClient repository;
+  final ServerProvider server;
   List<Robot> _robots = [];
   bool _isLoading = false;
   String? _errorMessage;
@@ -14,11 +15,12 @@ class RobotProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   // Constructor
-  RobotProvider(this.repository);
+  RobotProvider({required this.server, required this.repository});
   // bindServer
-  Future<void> bindServer(ServerProvider server) async {
+  Future<void> bindServer() async {
     if (server.status == ConnectionStatus.connecting) {
       _isLoading = true;
+      _errorMessage = null;
       _robots = [];
     }
     if (server.status == ConnectionStatus.connected) {

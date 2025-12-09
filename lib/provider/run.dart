@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:task_distribution/model/run.dart';
 import 'package:task_distribution/provider/socket.dart';
@@ -6,6 +7,7 @@ import 'package:task_distribution/service/run.dart';
 class RunProvider extends ChangeNotifier {
   //
   final RunClient repository;
+  final ServerProvider server;
   List<Run> _runs = [];
   bool _isLoading = false;
   String? _errorMessage;
@@ -14,9 +16,9 @@ class RunProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   // Constructor
-  RunProvider(this.repository);
+  RunProvider({required this.repository, required this.server});
   // bindServer
-  Future<void> bindServer(ServerProvider server) async {
+  Future<void> bindServer() async {
     if (server.status == ConnectionStatus.connecting) {
       _isLoading = true;
       _runs = [];
@@ -32,5 +34,29 @@ class RunProvider extends ChangeNotifier {
       _runs = [];
     }
     notifyListeners();
+  }
+
+  Future<void> download(Run run) async {
+    if (run.result == null) {
+      server.warning("Không tìm thấy file kết quả");
+      return;
+    }
+    final String? directoryPath = await FilePicker.platform.getDirectoryPath(
+      dialogTitle: "Lưu kết quả ${run.robot}",
+      lockParentWindow: true,
+    );
+    if (directoryPath == null) {
+      server.warning("Vui lòng chọn thư mục lưu file.");
+      return;
+    }
+    final (success, message) = await repository.getResult(
+      run: run,
+      savePath: directoryPath,
+    );
+    if (success) {
+      server.notification(message);
+    } else {
+      server.warning(message);
+    }
   }
 }

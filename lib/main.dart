@@ -39,16 +39,22 @@ class TaskDistribution extends StatelessWidget {
           create: (_) => ServerProvider("ws://127.0.0.1:8000/ws"),
         ),
         ChangeNotifierProxyProvider<ServerProvider, RobotProvider>(
-          create: (_) => RobotProvider(RobotClient('http://127.0.0.1:8000')),
+          create: (BuildContext context) => RobotProvider(
+            repository: RobotClient('http://127.0.0.1:8000'),
+            server: context.read<ServerProvider>(),
+          ),
           update: (_, serverProvider, robotProvider) {
-            robotProvider!.bindServer(serverProvider);
+            robotProvider!.bindServer();
             return robotProvider;
           },
         ),
         ChangeNotifierProxyProvider<ServerProvider, RunProvider>(
-          create: (_) => RunProvider(RunClient('http://127.0.0.1:8000')),
+          create: (BuildContext context) => RunProvider(
+            repository: RunClient('http://127.0.0.1:8000'),
+            server: context.read<ServerProvider>(),
+          ),
           update: (_, serverProvider, runProvider) {
-            runProvider!.bindServer(serverProvider);
+            runProvider!.bindServer();
             return runProvider;
           },
         ),

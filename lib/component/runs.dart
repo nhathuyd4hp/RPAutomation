@@ -1,4 +1,3 @@
-import "package:file_picker/file_picker.dart";
 import "package:fluent_ui/fluent_ui.dart";
 import "package:provider/provider.dart";
 import "package:task_distribution/model/run.dart";
@@ -141,10 +140,8 @@ class _RunsManagementState extends State<RunsManagement> {
           FilledButton(
             onPressed: run.status != "SUCCESS"
                 ? null
-                : () async {
-                    await FilePicker.platform.getDirectoryPath(
-                      dialogTitle: "Lưu kết quả",
-                    );
+                : () {
+                    context.read<RunProvider>().download(run);
                   },
             child: const Text('Kết quả'),
           ),

@@ -28,7 +28,7 @@ class Home extends StatelessWidget {
                 );
               },
             );
-            server.clearErrorMessage(); // tránh hiển thị lại
+            server.clearErrorMessage();
           });
         }
         if (server.latestMessage != null) {
@@ -46,7 +46,7 @@ class Home extends StatelessWidget {
             );
             server.clearLatestMessage(); // tránh hiển thị lại
           });
-          server.clearLatestMessage(); // tránh hiển thị lại
+          server.clearLatestMessage();
         }
         return ScaffoldPage(
           padding: EdgeInsets.all(0),
