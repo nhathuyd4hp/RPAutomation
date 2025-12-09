@@ -1,9 +1,11 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
+import 'package:task_distribution/provider/run.dart';
 import 'package:task_distribution/service/robot.dart';
 import 'package:task_distribution/provider/page.dart';
 import 'package:task_distribution/provider/robot.dart';
 import 'package:task_distribution/provider/socket.dart';
+import 'package:task_distribution/service/run.dart';
 import 'package:window_manager/window_manager.dart';
 import "screen/home.dart";
 
@@ -41,6 +43,13 @@ class TaskDistribution extends StatelessWidget {
           update: (_, serverProvider, robotProvider) {
             robotProvider!.bindServer(serverProvider);
             return robotProvider;
+          },
+        ),
+        ChangeNotifierProxyProvider<ServerProvider, RunProvider>(
+          create: (_) => RunProvider(RunClient('http://127.0.0.1:8000')),
+          update: (_, serverProvider, runProvider) {
+            runProvider!.bindServer(serverProvider);
+            return runProvider;
           },
         ),
       ],

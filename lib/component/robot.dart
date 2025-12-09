@@ -1,5 +1,6 @@
 import "package:fluent_ui/fluent_ui.dart";
 import "package:provider/provider.dart";
+import "package:task_distribution/const/box_decoration.dart";
 import "package:task_distribution/model/robot.dart";
 import "package:task_distribution/provider/robot.dart";
 
@@ -38,7 +39,7 @@ class _RobotManagementState extends State<RobotManagement> {
         ),
       ),
       content: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 25),
+        padding: const EdgeInsets.all(25),
         child: table(context, robotProvider, nameFilter),
       ),
     );
@@ -91,20 +92,17 @@ class _RobotManagementState extends State<RobotManagement> {
     );
   }
 
-  Widget _listRobot(BuildContext context, Robot robot) {
+  Widget _listRobots(BuildContext context, Robot robot) {
     return Container(
       margin: const EdgeInsets.only(bottom: 5),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: FluentTheme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: getBoxDecorator,
       child: Row(
         children: [
           Expanded(
             child: Text(
               robot.name.replaceAll("_", " ").split(".").last.toUpperCase(),
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
             ),
           ),
           FilledButton(
@@ -182,7 +180,7 @@ class _RobotManagementState extends State<RobotManagement> {
     return ListView.builder(
       itemCount: filtered.length,
       itemBuilder: (context, index) {
-        return _listRobot(context, filtered[index]);
+        return _listRobots(context, filtered[index]);
       },
     );
   }
