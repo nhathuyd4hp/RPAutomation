@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:fluent_ui/fluent_ui.dart';
 
 class Run {
   final String id;
@@ -29,5 +29,15 @@ class Run {
       createdAt: json['created_at'] as String,
       updatedAt: json['updated_at'] as String?,
     );
+  }
+
+  Color getColor() {
+    if (status == "FAILURE") {
+      return Color(0xfffeebeb);
+    }
+    if (status == "PENDING") {
+      return Color(0xffecfaf4);
+    }
+    return Color(0xffeff7ff);
   }
 }

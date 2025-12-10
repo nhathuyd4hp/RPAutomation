@@ -5,7 +5,7 @@ import "package:task_distribution/provider/socket.dart";
 import "../provider/page.dart";
 import "../view/robot/robot.dart";
 import "../view/schedule.dart";
-import "../view/runs.dart";
+import "../view/run/runs.dart";
 
 class Home extends StatelessWidget {
   const Home({super.key});

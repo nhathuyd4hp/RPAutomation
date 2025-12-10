@@ -3,6 +3,7 @@ import "package:provider/provider.dart";
 import "package:task_distribution/core/widget/text_box.dart";
 import "package:task_distribution/model/run.dart";
 import "package:task_distribution/provider/run.dart";
+import "package:task_distribution/view/run/widget/information_dialog.dart";
 
 class RunsManagement extends StatefulWidget {
   const RunsManagement({super.key});
@@ -140,7 +141,7 @@ class _RunsManagementState extends State<RunsManagement> {
       padding: const EdgeInsets.all(10),
       height: 50,
       decoration: BoxDecoration(
-        color: Color(0xfff8fafc),
+        color: run.getColor(),
         border: Border.all(color: Color(0xffe5eaf1), width: 1.5),
         borderRadius: BorderRadius.circular(12),
       ),
@@ -155,20 +156,31 @@ class _RunsManagementState extends State<RunsManagement> {
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               Text(
-                run.robot.replaceAll("_", " ").split(".").last.toUpperCase(),
+                run.createdAt,
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               Text(
-                run.createdAt,
+                run.robot.replaceAll("_", " ").split(".").last.toUpperCase(),
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
             ],
           ),
           FilledButton(
-            onPressed: () {
-              context.read<RunProvider>().download(run);
+            onPressed: () async {
+              final provider = context.read<RunProvider>();
+              final result = await showDialog(
+                context: context,
+                builder: (BuildContext dialogContext) {
+                  return InformationDialog(
+                    dialogContext: dialogContext,
+                    run: run,
+                  );
+                },
+              );
+              if (result == null) return;
+              provider.download(run);
             },
-            child: const Text('Kết quả'),
+            child: const Text('Chi tiết'),
           ),
         ],
       ),
