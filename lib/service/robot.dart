@@ -20,4 +20,21 @@ class RobotClient {
         .toList();
     return robots;
   }
+
+  Future<(bool, String)> run(Map<String, dynamic> parameters) async {
+    try {
+      final url = Uri.parse("$backend/api/robots/run");
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(parameters),
+      );
+      if (response.statusCode != 200) {
+        return (false, response.body);
+      }
+      return (true, "Khởi động bot thành công");
+    } catch (e) {
+      return (false, e.toString());
+    }
+  }
 }

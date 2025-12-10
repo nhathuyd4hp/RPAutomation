@@ -1,18 +1,22 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
-import 'package:task_distribution/component/header.dart';
+import 'package:task_distribution/core/widget/header.dart';
 import "package:task_distribution/provider/socket.dart";
 import "../provider/page.dart";
-import "../component/robot.dart";
-import "../component/schedule.dart";
-import "../component/runs.dart";
+import "../view/robot/robot.dart";
+import "../view/schedule.dart";
+import "../view/runs.dart";
 
 class Home extends StatelessWidget {
   const Home({super.key});
 
   @override
   Widget build(BuildContext context) {
+    //
     final page = context.watch<PageProvider>();
+    const EdgeInsets padding = EdgeInsets.symmetric(horizontal: 25);
+    const EdgeInsets margin = EdgeInsets.only(bottom: 25);
+
     return Consumer<ServerProvider>(
       builder: (context, server, child) {
         if (server.errorMessage != null) {
@@ -50,17 +54,21 @@ class Home extends StatelessWidget {
         }
         return ScaffoldPage(
           padding: EdgeInsets.all(0),
-          header: const Header(),
-          content: LayoutBuilder(
-            builder: (BuildContext context, BoxConstraints _) {
-              if (page.getPage() == AppPage.runs) {
-                return RunsManagement();
-              } else if (page.getPage() == AppPage.schedule) {
-                return ScheduleManagement();
-              } else {
-                return RobotManagement();
-              }
-            },
+          header: const Header(padding: padding),
+          content: Container(
+            padding: padding,
+            margin: margin,
+            child: LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints _) {
+                if (page.getPage() == AppPage.runs) {
+                  return RunsManagement();
+                } else if (page.getPage() == AppPage.schedule) {
+                  return ScheduleManagement();
+                } else {
+                  return RobotManagement();
+                }
+              },
+            ),
           ),
         );
       },

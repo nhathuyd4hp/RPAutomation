@@ -1,18 +1,18 @@
-class Parameters {
+class Parameter {
   final String name;
   final dynamic defaultValue;
   final bool required;
   final String annotation;
 
-  Parameters({
+  Parameter({
     required this.name,
     required this.required,
     required this.annotation,
     this.defaultValue,
   });
 
-  factory Parameters.fromJson(Map<String, dynamic> json) {
-    return Parameters(
+  factory Parameter.fromJson(Map<String, dynamic> json) {
+    return Parameter(
       name: json['name'] as String,
       defaultValue: json['default'],
       required: json['required'] as bool,
@@ -24,7 +24,7 @@ class Parameters {
 class Robot {
   final String name;
   final bool active;
-  final List<Parameters> parameters;
+  final List<Parameter> parameters;
 
   Robot({required this.name, required this.active, required this.parameters});
 
@@ -33,7 +33,7 @@ class Robot {
       name: json['name'] as String,
       active: json['active'] as bool,
       parameters: (json['parameters'] as List<dynamic>)
-          .map((e) => Parameters.fromJson(e))
+          .map((e) => Parameter.fromJson(e))
           .toList(),
     );
   }

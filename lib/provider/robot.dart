@@ -35,4 +35,13 @@ class RobotProvider extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+  Future<void> run(Map<String, dynamic> parameters) async {
+    final (success, message) = await repository.run(parameters);
+    if (success) {
+      server.notification(message);
+    } else {
+      server.warning(message);
+    }
+  }
 }
