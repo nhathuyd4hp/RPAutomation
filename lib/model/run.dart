@@ -6,8 +6,8 @@ class Run {
   final String status;
   final String? parameters;
   final String? result;
-  final String createdAt;
-  final String? updatedAt;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
 
   Run({
     required this.id,
@@ -26,8 +26,10 @@ class Run {
       status: json['status'] as String,
       parameters: json['parameters'] as String?,
       result: json['result'] as String?,
-      createdAt: json['created_at'] as String,
-      updatedAt: json['updated_at'] as String?,
+      createdAt: DateTime.parse(json['created_at']),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'])
+          : null,
     );
   }
 

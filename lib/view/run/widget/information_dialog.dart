@@ -42,7 +42,7 @@ class InformationDialog extends StatelessWidget {
           _buildTableRow('Tên:', run.robot),
           _buildTableRow('Tình trạng:', run.status),
           _buildTableRow('Tham số:', run.parameters ?? ""),
-          _buildTableRow('Chạy lúc:', run.createdAt),
+          _buildTableRow('Chạy lúc:', run.createdAt.toString()),
         ],
       ),
       actions: <Widget>[

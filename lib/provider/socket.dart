@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -47,8 +49,18 @@ class ServerProvider extends ChangeNotifier {
       notifyListeners();
       channel.stream.listen(
         (message) {
-          _latestMessage = message.toString();
-          notifyListeners();
+          try {
+            if (message is String) {
+              _latestMessage = message;
+            }
+            if (message is List<int>) {
+              _latestMessage = utf8.decode(message);
+            }
+          } catch (e) {
+            _latestMessage = message.toString();
+          } finally {
+            notifyListeners();
+          }
         },
         onDone: () {
           _errorMessage = "Mất kết nối đến server";

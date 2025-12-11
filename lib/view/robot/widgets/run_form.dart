@@ -39,16 +39,20 @@ class _RunFormState extends State<RunForm> {
       return Text("Không có tham số đầu vào");
     }
     return Column(
+      spacing: 25,
       mainAxisAlignment: MainAxisAlignment.center,
       children: widget.robot.parameters.map<Widget>((param) {
         return Row(
           spacing: 25,
           children: [
-            Text(
-              param.name.toUpperCase().replaceAll('_', " "),
-              style: TextStyle(fontWeight: FontWeight.w500),
+            Expanded(
+              flex: 1,
+              child: Text(
+                param.name.toUpperCase().replaceAll('_', " "),
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
             ),
-            Expanded(child: _buildInput(param)),
+            Expanded(flex: 2, child: _buildInput(param)),
           ],
         );
       }).toList(),

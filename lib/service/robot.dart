@@ -32,7 +32,8 @@ class RobotClient {
       if (response.statusCode != 200) {
         return (false, response.body);
       }
-      return (true, "Khởi động bot thành công");
+      Map<String, dynamic> responseJson = jsonDecode(response.body);
+      return (true, responseJson['data']['id'].toString());
     } catch (e) {
       return (false, e.toString());
     }

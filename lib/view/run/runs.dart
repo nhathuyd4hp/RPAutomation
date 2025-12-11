@@ -1,4 +1,5 @@
 import "package:fluent_ui/fluent_ui.dart";
+import "package:flutter/foundation.dart";
 import "package:provider/provider.dart";
 import "package:task_distribution/core/widget/text_box.dart";
 import "package:task_distribution/model/run.dart";
@@ -25,9 +26,18 @@ class _RunsManagementState extends State<RunsManagement> {
         spacing: 25,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Lịch sử chạy',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w500),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Lịch sử chạy',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w500),
+              ),
+              Text(
+                'Số lượng: ${runProvider.runs.length}',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+              ),
+            ],
           ),
           Row(
             spacing: 25,
@@ -111,22 +121,24 @@ class _RunsManagementState extends State<RunsManagement> {
       );
     }
     final filtered = provider.runs.where((run) {
-      // Lọc theo nameFilter
+      // Lọc theo nameContains
       final matchesName = nameContains.isEmpty
           ? true
           : run.robot
                 .split('.')
                 .last
+                .replaceAll("_", " ")
                 .toLowerCase()
                 .contains(nameContains.toLowerCase());
-
-      // Lọc theo statusFilter
+      // Lọc theo status
       final matchesStatus = statusFilter == "--"
           ? true
           : run.status == statusFilter;
-
       return matchesName && matchesStatus;
     }).toList();
+
+    filtered.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
     return ListView.builder(
       itemCount: filtered.length,
       itemBuilder: (context, index) {
@@ -156,7 +168,7 @@ class _RunsManagementState extends State<RunsManagement> {
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               Text(
-                run.createdAt,
+                run.createdAt.toString(),
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               Text(
