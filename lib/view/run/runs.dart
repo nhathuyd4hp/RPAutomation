@@ -41,6 +41,35 @@ class _RunsManagementState extends State<RunsManagement> {
           Row(
             spacing: 25,
             children: [
+              Container(
+                padding: EdgeInsets.all(0),
+                height: 50,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color: Color(0xffffffff),
+                ),
+                child: DropDownButton(
+                  style: ButtonStyle(
+                    shape: WidgetStatePropertyAll(
+                      RoundedRectangleBorder(
+                        side: BorderSide.none,
+                        borderRadius: BorderRadiusGeometry.all(
+                          Radius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                  title: Text(statusFilter),
+                  items: ["--", "Pending", "Failure", "Success"].map((e) {
+                    return MenuFlyoutItem(
+                      text: Text(e),
+                      onPressed: () {
+                        setState(() => statusFilter = e);
+                      },
+                    );
+                  }).toList(),
+                ),
+              ),
               Expanded(
                 child: Container(
                   padding: EdgeInsets.all(10),
@@ -50,7 +79,7 @@ class _RunsManagementState extends State<RunsManagement> {
                     color: Color(0xffffffff),
                   ),
                   child: WinTextBox(
-                    prefix: WindowsIcon(WindowsIcons.search, size: 20.0),
+                    prefix: WindowsIcon(WindowsIcons.search, size: 18.0),
                     placeholder: "Lọc theo tên",
                     onChanged: (value) {
                       setState(() {
@@ -58,27 +87,6 @@ class _RunsManagementState extends State<RunsManagement> {
                       });
                     },
                   ),
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.all(0),
-                height: 50,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: Color(0xffffffff),
-                ),
-                child: ComboBox<String>(
-                  value: statusFilter,
-                  items: ["--", "PENDING", "FAILURE", "SUCCESS"]
-                      .map<ComboBoxItem<String>>((e) {
-                        return ComboBoxItem<String>(value: e, child: Text(e));
-                      })
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      statusFilter = value ?? "--";
-                    });
-                  },
                 ),
               ),
             ],
@@ -132,7 +140,7 @@ class _RunsManagementState extends State<RunsManagement> {
       // Lọc theo status
       final matchesStatus = statusFilter == "--"
           ? true
-          : run.status == statusFilter;
+          : run.status.toLowerCase() == statusFilter.toLowerCase();
       return matchesName && matchesStatus;
     }).toList();
 
