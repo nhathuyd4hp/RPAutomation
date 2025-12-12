@@ -46,6 +46,10 @@ class ScheduleProvider extends ChangeNotifier {
   }
 
   Future<void> setSchedule(Robot robot, Map<String, String> schedule) async {
+    if (schedule['day_of_week'] == "") {
+      server.warning("Cần ít nhất 1 ngày chạy");
+      return;
+    }
     final (success, message) = await repository.setSchedule(robot, schedule);
     if (success) {
       server.notification(message);

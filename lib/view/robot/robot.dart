@@ -54,7 +54,7 @@ class _RobotManagementState extends State<RobotManagement> {
                 borderRadius: BorderRadius.circular(12),
                 color: Color(0xffffffff),
               ),
-              child: table(context, robotProvider),
+              child: Expanded(child: table(context, robotProvider)),
             ),
           ),
         ],

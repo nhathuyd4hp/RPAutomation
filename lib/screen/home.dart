@@ -4,7 +4,7 @@ import 'package:task_distribution/core/widget/header.dart';
 import "package:task_distribution/provider/socket.dart";
 import "../provider/page.dart";
 import "../view/robot/robot.dart";
-import "../view/schedule.dart";
+import "../view/schedule/schedule.dart";
 import "../view/run/runs.dart";
 
 class Home extends StatelessWidget {

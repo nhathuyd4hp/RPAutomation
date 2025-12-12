@@ -2,9 +2,9 @@ class Schedule {
   final String id;
   final String name;
   final dynamic parameters;
-  final String? nextRunTime;
-  final String startDate;
-  final String endDate;
+  final DateTime? nextRunTime;
+  final DateTime? startDate;
+  final DateTime? endDate;
   final String status;
 
   Schedule({
@@ -12,8 +12,8 @@ class Schedule {
     required this.name,
     this.parameters,
     this.nextRunTime,
-    required this.startDate,
-    required this.endDate,
+    this.startDate,
+    this.endDate,
     required this.status,
   });
 
@@ -22,9 +22,15 @@ class Schedule {
       id: json['id'] as String,
       name: json['name'] as String,
       parameters: json['parameters'] as dynamic,
-      nextRunTime: json['next_run_time'] as String?,
-      startDate: json['start_date'] as String,
-      endDate: json['end_date'] as String,
+      nextRunTime: json['next_run_time'] != null
+          ? DateTime.parse(json['next_run_time'])
+          : null,
+      startDate: json['start_date'] != null
+          ? DateTime.parse(json['start_date'])
+          : null,
+      endDate: json['end_date'] != null
+          ? DateTime.parse(json['end_date'])
+          : null,
       status: json['status'] as String,
     );
   }
