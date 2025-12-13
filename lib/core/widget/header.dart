@@ -8,51 +8,66 @@ class Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pageState = context.read<PageProvider>();
+    final pageState = context.watch<PageProvider>();
+    final theme = FluentTheme.of(context);
+
     return Container(
-      color: Color(0xffffffff),
-      height: 75,
-      padding: padding,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            "QUẢN LÍ ROBOT",
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+      height: 65,
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        border: Border(
+          bottom: BorderSide(
+            color: theme.resources.dividerStrokeColorDefault,
+            width: 1,
           ),
+        ),
+      ),
+      child: Row(
+        spacing: 50,
+        children: [
+          Text("Robot Automation", style: theme.typography.title),
           Row(
-            spacing: 20,
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            spacing: 25,
             children: [
-              FilledButton(
-                style: ButtonStyle(
-                  padding: WidgetStatePropertyAll(
-                    EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  ),
-                ),
-                child: Text('Robot'),
+              _buildNavItem(
+                context,
+                label: "Robot",
+                icon: FluentIcons.robot,
                 onPressed: () => pageState.setPage(AppPage.robot),
               ),
-              FilledButton(
-                style: ButtonStyle(
-                  padding: WidgetStatePropertyAll(
-                    EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  ),
-                ),
-                child: Text('Lịch sử chạy'),
+              _buildNavItem(
+                context,
+                label: "Runs",
+                icon: FluentIcons.history,
                 onPressed: () => pageState.setPage(AppPage.runs),
               ),
-              FilledButton(
-                style: ButtonStyle(
-                  padding: WidgetStatePropertyAll(
-                    EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  ),
-                ),
-                child: Text('Lịch trình chạy'),
+              _buildNavItem(
+                context,
+                label: "Schedule",
+                icon: FluentIcons.calendar,
                 onPressed: () => pageState.setPage(AppPage.schedule),
               ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavItem(
+    BuildContext context, {
+    required String label,
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return FilledButton(
+      onPressed: onPressed,
+      child: Row(
+        spacing: 10,
+        children: [
+          Icon(icon, size: 16, color: Colors.white),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
         ],
       ),
     );

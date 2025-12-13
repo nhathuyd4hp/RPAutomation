@@ -1,4 +1,5 @@
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter/foundation.dart';
 
 class ScheduleForm extends StatefulWidget {
   final BuildContext dialogContext;
@@ -22,16 +23,15 @@ class _ScheduleFormState extends State<ScheduleForm> {
   @override
   Widget build(BuildContext context) {
     return ContentDialog(
-      constraints: BoxConstraints(maxWidth: 338.5, maxHeight: 550),
-      title: Text('Lịch chạy'),
+      constraints: BoxConstraints(maxWidth: 338.5, maxHeight: 450),
+      title: Text('Setup Schedule'),
       content: Column(
-        spacing: 10,
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             child: DatePicker(
-              header: "Ngày bắt đầu:",
+              header: "From",
               headerStyle: TextStyle(fontWeight: FontWeight.w500),
               selected: startDate,
               onChanged: (time) {
@@ -43,7 +43,7 @@ class _ScheduleFormState extends State<ScheduleForm> {
           ),
           Expanded(
             child: DatePicker(
-              header: "Ngày kết thúc:",
+              header: "To",
               headerStyle: TextStyle(fontWeight: FontWeight.w500),
               selected: endDate,
               onChanged: (time) {
@@ -55,10 +55,12 @@ class _ScheduleFormState extends State<ScheduleForm> {
           ),
           Expanded(
             child: TimePicker(
-              header: "Giờ chạy:",
+              header: "Run at",
               headerStyle: TextStyle(fontWeight: FontWeight.w500),
               selected: DateTime.now(),
-              onChanged: (time) {},
+              onChanged: (time) {
+                runTime = time;
+              },
               hourFormat: HourFormat.HH,
             ),
           ),
@@ -68,7 +70,7 @@ class _ScheduleFormState extends State<ScheduleForm> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Ngày chạy:",
+                  "Day of week",
                   style: TextStyle(fontWeight: FontWeight.w500),
                 ),
                 Row(
@@ -92,13 +94,13 @@ class _ScheduleFormState extends State<ScheduleForm> {
       ),
       actions: <Widget>[
         Button(
-          child: Text('Hủy'),
+          child: Text('Cancel'),
           onPressed: () {
             Navigator.pop(widget.dialogContext, null);
           },
         ),
         FilledButton(
-          child: Text('Cài'),
+          child: Text('Confirm'),
           onPressed: () {
             final Map<String, dynamic> result = {
               "hour": runTime.hour,
@@ -107,9 +109,8 @@ class _ScheduleFormState extends State<ScheduleForm> {
                 for (int i = 0; i < dayOfWeek.length; i++)
                   if (dayOfWeek[i]) keyDayOfWeek[i],
               ].join(','),
-
-              "start_date": startDate.toString(),
-              "end_date": endDate.toString(),
+              "start_date": startDate.toIso8601String(),
+              "end_date": endDate.toIso8601String(),
             };
             final Map<String, String> schedule = result.map((key, value) {
               return MapEntry(key, value.toString());

@@ -48,7 +48,7 @@ class Home extends StatelessWidget {
                 );
               },
             );
-            server.clearLatestMessage(); // tránh hiển thị lại
+            server.clearLatestMessage();
           });
           server.clearLatestMessage();
         }

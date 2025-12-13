@@ -35,20 +35,20 @@ class InformationDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ContentDialog(
-      constraints: BoxConstraints(maxHeight: 700),
-      title: Text('Thông tin chi tiết'),
+      constraints: BoxConstraints(),
+      title: Text('Run Details'),
       content: Table(
         children: [
-          _buildTableRow('Tên:', run.robot),
-          _buildTableRow('Tình trạng:', run.status),
-          _buildTableRow('Tham số:', run.parameters ?? ""),
-          _buildTableRow('Chạy lúc:', run.createdAt.toString()),
+          _buildTableRow('ROBOT NAME:', run.robot),
+          _buildTableRow('STATUS:', run.status),
+          _buildTableRow('PARAMETER:', run.parameters ?? ""),
+          _buildTableRow('RUN AT:', run.createdAt.toIso8601String()),
         ],
       ),
       actions: <Widget>[
         run.status == "SUCCESS"
             ? FilledButton(
-                child: Text('Kết quả'),
+                child: Text('Result'),
                 onPressed: () {
                   Navigator.pop(dialogContext, run);
                 },

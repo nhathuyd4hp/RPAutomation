@@ -81,17 +81,17 @@ class _RunFormState extends State<RunForm> {
         maxWidth: 500,
         maxHeight: 225 + (robot.parameters.length * 25),
       ),
-      title: Text('Nhập tham số đầu vào'),
+      title: Text('Input'),
       content: _buildForm(),
       actions: <Widget>[
         Button(
-          child: Text('Hủy'),
+          child: Text('Cancel'),
           onPressed: () {
             Navigator.pop(widget.dialogContext, null);
           },
         ),
         FilledButton(
-          child: Text('Chạy'),
+          child: Text('Confirm'),
           onPressed: () {
             final Map<String, String> data = _controllers.map((key, value) {
               return MapEntry(key, value.toString());
