@@ -15,14 +15,14 @@ class _ScheduleFormState extends State<ScheduleForm> {
   DateTime runTime = DateTime.now();
   bool parametersInput = false;
   List<bool> dayOfWeek = [true, true, true, true, true, true, true];
-  List<String> labelDayOfWeek = ["2", "3", "4", "5", "6", "7", "CN"];
+  List<String> labelDayOfWeek = ["2", "3", "4", "5", "6", "7", "SU"];
   List<String> keyDayOfWeek = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
   //
 
   @override
   Widget build(BuildContext context) {
     return ContentDialog(
-      constraints: BoxConstraints(maxWidth: 340, maxHeight: 500),
+      constraints: BoxConstraints(maxWidth: 345, maxHeight: 500),
       title: Text('Schedule Configuration'),
       content: Column(
         spacing: 25,

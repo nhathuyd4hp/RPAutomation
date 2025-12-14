@@ -52,24 +52,19 @@ class _ScheduleManagementState extends State<ScheduleManagement> {
         title: const Text("Schedule"),
         commandBar: Row(
           mainAxisAlignment: MainAxisAlignment.end,
+          spacing: 25,
           children: [
             // Dropdown Lọc trạng thái
-            SizedBox(
-              width: 200,
-              child: ComboBox<String>(
-                value: statusFilter,
-                items: statusMap.keys.map((e) {
-                  return ComboBoxItem(value: e, child: Text(e));
-                }).toList(),
-                onChanged: (value) {
-                  if (value != null) setState(() => statusFilter = value);
-                },
-              ),
+            ComboBox<String>(
+              value: statusFilter,
+              items: statusMap.keys.map((e) {
+                return ComboBoxItem(value: e, child: Text(e));
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) setState(() => statusFilter = value);
+              },
             ),
-            const SizedBox(width: 10),
-            // Ô tìm kiếm
-            SizedBox(
-              width: 250,
+            Expanded(
               child: TextBox(
                 placeholder: 'Search...',
                 prefix: const Padding(
