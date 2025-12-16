@@ -84,6 +84,16 @@ class _RunFormState extends State<RunForm> {
         child: Text(displayText),
       );
     }
+    if (parameter.annotation.toLowerCase().contains("bool")) {
+      return Checkbox(
+        checked: _controllers[parameter.name],
+        onChanged: (value) {
+          setState(() {
+            _controllers[parameter.name] = value;
+          });
+        },
+      );
+    }
     return TextBox(
       placeholder: parameter.name,
       placeholderStyle: TextStyle(fontWeight: FontWeight.w500),
@@ -141,6 +151,10 @@ class _RunFormState extends State<RunForm> {
         _controllers[p.name] = defaultValue;
       } else if (p.annotation.toLowerCase().contains('bytes')) {
         _controllers[p.name] = defaultValue;
+      } else if (p.annotation.toLowerCase().contains('bool')) {
+        _controllers[p.name] = defaultValue
+            ? bool.parse(defaultValue.toString())
+            : false;
       } else {
         _controllers[p.name] = defaultValue ?? "";
       }
