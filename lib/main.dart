@@ -29,6 +29,19 @@ void main() async {
 }
 
 class TaskDistribution extends StatelessWidget {
+  // -- Enviroment
+  static const String domain = String.fromEnvironment(
+    'domain',
+    defaultValue: "127.0.0.1:8000",
+  );
+  static const bool https = bool.fromEnvironment('https', defaultValue: false);
+  // -- Schema --
+  static const String httpScheme = https ? 'https' : 'http';
+  static const String wsScheme = https ? 'wss' : 'ws';
+  // -- Domain
+  static const String backendUrl = '$httpScheme://$domain';
+  static const String wsUrl = '$wsScheme://$domain/ws';
+
   const TaskDistribution({super.key});
 
   @override
@@ -38,11 +51,11 @@ class TaskDistribution extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => PageProvider()),
         ChangeNotifierProvider(
           lazy: false,
-          create: (_) => ServerProvider("ws://192.168.0.146:8000/ws"),
+          create: (_) => ServerProvider(wsUrl),
         ),
         ChangeNotifierProxyProvider<ServerProvider, RobotProvider>(
           create: (BuildContext context) => RobotProvider(
-            repository: RobotClient('http://192.168.0.146:8000'),
+            repository: RobotClient(backendUrl),
             server: context.read<ServerProvider>(),
           ),
           update: (_, serverProvider, robotProvider) {
@@ -52,7 +65,7 @@ class TaskDistribution extends StatelessWidget {
         ),
         ChangeNotifierProxyProvider<ServerProvider, RunProvider>(
           create: (BuildContext context) => RunProvider(
-            repository: RunClient('http://192.168.0.146:8000'),
+            repository: RunClient(backendUrl),
             server: context.read<ServerProvider>(),
           ),
           update: (_, serverProvider, runProvider) {
@@ -62,7 +75,7 @@ class TaskDistribution extends StatelessWidget {
         ),
         ChangeNotifierProxyProvider<ServerProvider, ScheduleProvider>(
           create: (BuildContext context) => ScheduleProvider(
-            repository: ScheduleClient('http://192.168.0.146:8000'),
+            repository: ScheduleClient(backendUrl),
             server: context.read<ServerProvider>(),
           ),
           update: (_, serverProvider, scheduleProvider) {

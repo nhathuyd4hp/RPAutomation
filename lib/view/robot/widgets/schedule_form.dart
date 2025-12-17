@@ -23,7 +23,7 @@ class _ScheduleFormState extends State<ScheduleForm> {
   Widget build(BuildContext context) {
     return ContentDialog(
       constraints: BoxConstraints(maxWidth: 345, maxHeight: 500),
-      title: Text('Schedule Configuration'),
+      title: Text('Schedule'),
       content: Column(
         spacing: 25,
         mainAxisAlignment: MainAxisAlignment.start,
