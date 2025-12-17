@@ -301,6 +301,11 @@ class _RunsManagementState extends State<RunsManagement> {
     String text = run.status;
 
     switch (run.status.toLowerCase()) {
+      case 'waiting':
+        bgColor = const Color(0xFFFFF8E1);
+        textColor = const Color(0xFFF9A825);
+        icon = FluentIcons.hour_glass;
+        break;
       case 'success':
         bgColor = const Color(0xFFE8F5E9);
         textColor = const Color(0xFF2E7D32);
