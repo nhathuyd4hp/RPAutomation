@@ -6,14 +6,14 @@ import "package:task_distribution/view/run/widget/logging_dialog.dart";
 import "package:task_distribution/model/run.dart";
 import "package:task_distribution/provider/run.dart";
 
-class RunsManagement extends StatefulWidget {
-  const RunsManagement({super.key});
+class RunsPage extends StatefulWidget {
+  const RunsPage({super.key});
 
   @override
-  State<RunsManagement> createState() => _RunsManagementState();
+  State<RunsPage> createState() => _RunsPageState();
 }
 
-class _RunsManagementState extends State<RunsManagement> {
+class _RunsPageState extends State<RunsPage> {
   String nameContains = "";
   String statusFilter = "--";
   bool isAscending = true;

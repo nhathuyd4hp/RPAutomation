@@ -4,14 +4,14 @@ import "package:task_distribution/core/widget/empty_state.dart";
 import "package:task_distribution/model/schedule.dart";
 import "package:task_distribution/provider/schedule.dart";
 
-class ScheduleManagement extends StatefulWidget {
-  const ScheduleManagement({super.key});
+class SchedulePage extends StatefulWidget {
+  const SchedulePage({super.key});
 
   @override
-  State<ScheduleManagement> createState() => _ScheduleManagementState();
+  State<SchedulePage> createState() => _SchedulePageState();
 }
 
-class _ScheduleManagementState extends State<ScheduleManagement> {
+class _SchedulePageState extends State<SchedulePage> {
   String nameContains = "";
   String statusFilter = "--";
 

@@ -7,14 +7,14 @@ import "package:task_distribution/model/robot.dart";
 import "package:task_distribution/provider/robot.dart";
 import "package:task_distribution/provider/schedule.dart";
 
-class RobotManagement extends StatefulWidget {
-  const RobotManagement({super.key});
+class RobotPage extends StatefulWidget {
+  const RobotPage({super.key});
 
   @override
-  State<RobotManagement> createState() => _RobotManagementState();
+  State<RobotPage> createState() => _RobotPageState();
 }
 
-class _RobotManagementState extends State<RobotManagement> {
+class _RobotPageState extends State<RobotPage> {
   String nameContains = "";
 
   @override
