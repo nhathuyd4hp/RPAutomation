@@ -24,8 +24,7 @@ class _RobotPageState extends State<RobotPage> {
 
     final filtered = robotProvider.robots.where((robot) {
       if (nameContains.isEmpty) return true;
-      final displayName = robot.name.replaceAll("_", " ").split(".").last;
-      return displayName.toLowerCase().contains(nameContains.toLowerCase()) ||
+      return robot.name.contains(nameContains.toLowerCase()) ||
           robot.name.toLowerCase().contains(nameContains.toLowerCase());
     }).toList();
 
@@ -143,12 +142,6 @@ class _RobotPageState extends State<RobotPage> {
     Robot robot,
     FluentThemeData theme,
   ) {
-    final displayName = robot.name
-        .replaceAll("_", " ")
-        .split(".")
-        .last
-        .toUpperCase();
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
@@ -159,7 +152,7 @@ class _RobotPageState extends State<RobotPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  displayName,
+                  robot.name,
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ],

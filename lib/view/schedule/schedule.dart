@@ -176,12 +176,6 @@ class _SchedulePageState extends State<SchedulePage> {
     Schedule schedule,
     FluentThemeData theme,
   ) {
-    final displayName = schedule.name
-        .replaceAll("_", " ")
-        .split(".")
-        .last
-        .toUpperCase();
-
     // Format thời gian chạy kế tiếp
     final nextRun = schedule.nextRunTime != null
         ? schedule.nextRunTime.toString().split('.')[0]
@@ -195,7 +189,7 @@ class _SchedulePageState extends State<SchedulePage> {
           Expanded(
             flex: 3,
             child: Text(
-              displayName,
+              schedule.name,
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),

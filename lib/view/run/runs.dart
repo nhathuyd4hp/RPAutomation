@@ -1,8 +1,8 @@
 import "package:fluent_ui/fluent_ui.dart";
 import "package:provider/provider.dart";
 import "package:task_distribution/core/widget/empty_state.dart";
+import "package:task_distribution/core/widget/status_badge.dart";
 import "package:task_distribution/view/run/widget/information_dialog.dart";
-import "package:task_distribution/view/run/widget/logging_dialog.dart";
 import "package:task_distribution/model/run.dart";
 import "package:task_distribution/provider/run.dart";
 
@@ -20,6 +20,8 @@ class _RunsPageState extends State<RunsPage> {
 
   final Map<String, String> statusMap = {
     "--": "--",
+    "Cancel": "Cancel",
+    "Waiting": "Waiting",
     "Pending": "Pending",
     "Failure": "Failure",
     "Success": "Success",
@@ -208,11 +210,7 @@ class _RunsPageState extends State<RunsPage> {
   }
 
   Widget _buildTableRow(BuildContext context, Run run, FluentThemeData theme) {
-    final robotName = run.robot
-        .replaceAll("_", " ")
-        .split(".")
-        .last
-        .toUpperCase();
+    final robotName = run.robot;
     final timeString = run.createdAt.toString().split('.')[0];
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -220,7 +218,7 @@ class _RunsPageState extends State<RunsPage> {
         children: [
           Expanded(
             flex: 3,
-            child: Text(
+            child: SelectableText(
               run.id,
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
@@ -232,7 +230,7 @@ class _RunsPageState extends State<RunsPage> {
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
-          Expanded(flex: 1, child: _buildStatusBadge(run)),
+          Expanded(flex: 1, child: StatusBadge(run: run)),
           Expanded(
             flex: 2,
             child: Text(
@@ -247,45 +245,17 @@ class _RunsPageState extends State<RunsPage> {
           ),
           Expanded(
             flex: 1,
-            child: Row(
-              children: [
-                Tooltip(
-                  message: "Chi tiết",
-                  child: IconButton(
-                    icon: Icon(
-                      FluentIcons.info,
-                      color: theme.accentColor,
-                      size: 18,
-                    ),
-                    onPressed: () async {
-                      final provider = context.read<RunProvider>();
-                      final result = await showDialog(
-                        context: context,
-                        builder: (ctx) =>
-                            InformationDialog(dialogContext: ctx, run: run),
-                      );
-                      if (result != null) provider.download(run);
-                    },
-                  ),
-                ),
-                Tooltip(
-                  message: "Log",
-                  child: IconButton(
-                    icon: const Icon(
-                      FluentIcons.compliance_audit,
-                      color: Color(0xFF2E7D32),
-                      size: 18,
-                    ), // Icon giống log file
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (ctx) =>
-                            LoggingDialog(dialogContext: ctx, run: run),
-                      );
-                    },
-                  ),
-                ),
-              ],
+            child: IconButton(
+              icon: Icon(FluentIcons.info, color: theme.accentColor, size: 18),
+              onPressed: () async {
+                final provider = context.read<RunProvider>();
+                final result = await showDialog(
+                  context: context,
+                  builder: (ctx) =>
+                      InformationDialog(dialogContext: ctx, run: run),
+                );
+                if (result != null) provider.download(run);
+              },
             ),
           ),
         ],
@@ -294,65 +264,4 @@ class _RunsPageState extends State<RunsPage> {
   }
 
   // Widget hiển thị trạng thái (Success/Failure/Pending)
-  Widget _buildStatusBadge(Run run) {
-    Color bgColor;
-    Color textColor;
-    IconData icon;
-    String text = run.status;
-
-    switch (run.status.toLowerCase()) {
-      case 'waiting':
-        bgColor = const Color(0xFFFFF8E1);
-        textColor = const Color(0xFFF9A825);
-        icon = FluentIcons.hour_glass;
-        break;
-      case 'success':
-        bgColor = const Color(0xFFE8F5E9);
-        textColor = const Color(0xFF2E7D32);
-        icon = FluentIcons.check_mark;
-        break;
-      case 'failure':
-      case 'error':
-        bgColor = const Color(0xFFFFEBEE);
-        textColor = const Color(0xFFC62828);
-        icon = FluentIcons.error;
-        break;
-      case 'pending':
-        bgColor = const Color(0xFFE3F2FD);
-        textColor = const Color(0xFF1565C0);
-        icon = FluentIcons.clock;
-        break;
-      default:
-        bgColor = const Color(0xFFF5F5F5);
-        textColor = const Color(0xFF616161);
-        icon = FluentIcons.unknown;
-    }
-
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: textColor.withValues(alpha: 0.2)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 12, color: textColor),
-            const SizedBox(width: 6),
-            Text(
-              text,
-              style: TextStyle(
-                color: textColor,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
