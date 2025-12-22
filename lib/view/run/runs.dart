@@ -4,7 +4,7 @@ import "package:task_distribution/core/widget/empty_state.dart";
 import "package:task_distribution/core/widget/status_badge.dart";
 import "package:task_distribution/view/run/widget/information_dialog.dart";
 import "package:task_distribution/model/run.dart";
-import "package:task_distribution/provider/run.dart";
+import "package:task_distribution/provider/run/run.dart";
 
 class RunsPage extends StatefulWidget {
   const RunsPage({super.key});

@@ -1,11 +1,12 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:local_notifier/local_notifier.dart';
 import 'package:provider/provider.dart';
-import 'package:task_distribution/provider/run.dart';
-import 'package:task_distribution/provider/schedule.dart';
+import 'package:task_distribution/provider/robot/robot_filter.dart';
+import 'package:task_distribution/provider/run/run.dart';
+import 'package:task_distribution/provider/schedule/schedule.dart';
 import 'package:task_distribution/service/robot.dart';
 import 'package:task_distribution/provider/page.dart';
-import 'package:task_distribution/provider/robot.dart';
+import 'package:task_distribution/provider/robot/robot.dart';
 import 'package:task_distribution/provider/socket.dart';
 import 'package:task_distribution/service/run.dart';
 import 'package:task_distribution/service/schedule.dart';
@@ -53,11 +54,14 @@ class TaskDistribution extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        // Navigation State
         ChangeNotifierProvider(create: (_) => PageProvider()),
+        // Server State
         ChangeNotifierProvider(
           lazy: false,
           create: (_) => ServerProvider(wsUrl),
         ),
+        // Data State
         ChangeNotifierProxyProvider<ServerProvider, RobotProvider>(
           create: (BuildContext context) => RobotProvider(
             repository: RobotClient(backendUrl),
@@ -88,6 +92,8 @@ class TaskDistribution extends StatelessWidget {
             return scheduleProvider;
           },
         ),
+        // Filter State
+        ChangeNotifierProvider(create: (_) => RobotFilterProvider()),
       ],
       child: FluentApp(
         title: "Task Distribution",

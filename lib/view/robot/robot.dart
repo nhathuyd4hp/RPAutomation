@@ -1,11 +1,12 @@
 import "package:fluent_ui/fluent_ui.dart";
 import "package:provider/provider.dart";
 import "package:task_distribution/core/widget/empty_state.dart";
+import "package:task_distribution/provider/robot/robot_filter.dart";
 import "package:task_distribution/view/robot/widgets/run_form.dart";
 import "package:task_distribution/view/robot/widgets/schedule_form.dart";
 import "package:task_distribution/model/robot.dart";
-import "package:task_distribution/provider/robot.dart";
-import "package:task_distribution/provider/schedule.dart";
+import "package:task_distribution/provider/robot/robot.dart";
+import "package:task_distribution/provider/schedule/schedule.dart";
 
 class RobotPage extends StatefulWidget {
   const RobotPage({super.key});
@@ -15,35 +16,68 @@ class RobotPage extends StatefulWidget {
 }
 
 class _RobotPageState extends State<RobotPage> {
-  String nameContains = "";
+  // 1. Khởi tạo Controller trong State để nó không bị tạo lại mỗi lần rebuild
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    final initialQuery = context.read<RobotFilterProvider>().nameQuery;
+    _controller = TextEditingController(text: initialQuery);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final robotProvider = context.watch<RobotProvider>();
     final theme = FluentTheme.of(context);
-
-    final filtered = robotProvider.robots.where((robot) {
-      if (nameContains.isEmpty) return true;
-      return robot.name.contains(nameContains.toLowerCase()) ||
-          robot.name.toLowerCase().contains(nameContains.toLowerCase());
-    }).toList();
-
-    return ScaffoldPage(
-      header: PageHeader(
-        padding: 0,
-        title: const Text('Robot'),
-        commandBar: TextBox(
+    // Search Box
+    final searchBox = Selector<RobotFilterProvider, String>(
+      selector: (_, provider) => provider.nameQuery,
+      builder: (context, query, child) {
+        return TextBox(
           placeholder: 'Search...',
           placeholderStyle: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
+          controller: _controller,
           prefix: const Padding(
             padding: EdgeInsets.only(left: 8.0),
             child: Icon(FluentIcons.search),
           ),
-          onChanged: (value) => setState(() => nameContains = value),
-        ),
+          onChanged: (value) {
+            context.read<RobotFilterProvider>().setNameContains(value);
+          },
+        );
+      },
+    );
+    // Data
+    final robot = Consumer2<RobotProvider, RobotFilterProvider>(
+      builder: (context, sourceProvider, filterProvider, child) {
+        final filtered = filterProvider.apply(sourceProvider.robots);
+        if (filtered.isEmpty) {
+          return EmptyState();
+        }
+        return ListView.separated(
+          itemCount: filtered.length,
+          separatorBuilder: (ctx, i) => const Divider(),
+          itemBuilder: (context, index) {
+            return _buildTableRow(context, filtered[index], theme);
+          },
+        );
+      },
+    );
+    // Layout
+    return ScaffoldPage(
+      header: PageHeader(
+        padding: 0,
+        title: const Text('Robot'),
+        commandBar: searchBox,
       ),
       content: Padding(
         padding: const EdgeInsets.all(0),
@@ -70,21 +104,7 @@ class _RobotPageState extends State<RobotPage> {
                   children: [
                     _buildTableHeader(theme),
                     const Divider(),
-                    Expanded(
-                      child: filtered.isEmpty
-                          ? EmptyState()
-                          : ListView.separated(
-                              itemCount: filtered.length,
-                              separatorBuilder: (ctx, i) => const Divider(),
-                              itemBuilder: (context, index) {
-                                return _buildTableRow(
-                                  context,
-                                  filtered[index],
-                                  theme,
-                                );
-                              },
-                            ),
-                    ),
+                    Expanded(child: robot),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -104,10 +124,7 @@ class _RobotPageState extends State<RobotPage> {
                           bottom: Radius.circular(8),
                         ),
                       ),
-                      child: Text(
-                        "Count: ${filtered.length}",
-                        style: theme.typography.body,
-                      ),
+                      child: Text("Count: 0", style: theme.typography.body),
                     ),
                   ],
                 ),

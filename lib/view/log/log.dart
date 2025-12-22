@@ -8,7 +8,7 @@ import 'package:task_distribution/core/widget/status_badge.dart';
 import 'package:task_distribution/main.dart';
 import 'package:task_distribution/model/log.dart';
 import 'package:task_distribution/model/run.dart';
-import 'package:task_distribution/provider/run.dart';
+import 'package:task_distribution/provider/run/run.dart';
 
 class ExecutionLogPage extends StatefulWidget {
   const ExecutionLogPage({super.key});
