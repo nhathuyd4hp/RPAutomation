@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:task_distribution/service/robot.dart';
 import 'package:task_distribution/provider/socket.dart';
-import "../model/robot.dart";
+import "../../model/robot.dart";
 
 class RobotProvider extends ChangeNotifier {
   //
