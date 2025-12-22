@@ -3,6 +3,7 @@ import 'package:local_notifier/local_notifier.dart';
 import 'package:provider/provider.dart';
 import 'package:task_distribution/provider/robot/robot_filter.dart';
 import 'package:task_distribution/provider/run/run.dart';
+import 'package:task_distribution/provider/run/run_filter.dart';
 import 'package:task_distribution/provider/schedule/schedule.dart';
 import 'package:task_distribution/service/robot.dart';
 import 'package:task_distribution/provider/page.dart';
@@ -94,6 +95,7 @@ class TaskDistribution extends StatelessWidget {
         ),
         // Filter State
         ChangeNotifierProvider(create: (_) => RobotFilterProvider()),
+        ChangeNotifierProvider(create: (_) => RunFilterProvider()),
       ],
       child: FluentApp(
         title: "Task Distribution",

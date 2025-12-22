@@ -2,6 +2,7 @@ import "package:fluent_ui/fluent_ui.dart";
 import "package:provider/provider.dart";
 import "package:task_distribution/core/widget/empty_state.dart";
 import "package:task_distribution/core/widget/run_status_badge.dart";
+import "package:task_distribution/provider/run/run_filter.dart";
 import "package:task_distribution/view/run/widget/information_dialog.dart";
 import "package:task_distribution/model/run.dart";
 import "package:task_distribution/provider/run/run.dart";
@@ -14,12 +15,11 @@ class RunsPage extends StatefulWidget {
 }
 
 class _RunsPageState extends State<RunsPage> {
-  String nameContains = "";
-  String statusFilter = "--";
   bool isAscending = true;
+  late TextEditingController _controller;
 
   final Map<String, String> statusMap = {
-    "--": "--",
+    "--": "",
     "Cancel": "Cancel",
     "Waiting": "Waiting",
     "Pending": "Pending",
@@ -28,33 +28,70 @@ class _RunsPageState extends State<RunsPage> {
   };
 
   @override
+  void initState() {
+    super.initState();
+    final initialQuery = context.read<RunFilterProvider>().nameQuery;
+    _controller = TextEditingController(text: initialQuery);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final runProvider = context.watch<RunProvider>();
     final theme = FluentTheme.of(context);
 
-    final filtered = runProvider.runs.where((run) {
-      final matchesName = nameContains.isEmpty
-          ? true
-          : run.robot
-                .split('.')
-                .last
-                .replaceAll("_", " ")
-                .toLowerCase()
-                .contains(nameContains.toLowerCase());
+    final statusFilter = Selector<RunFilterProvider, String>(
+      selector: (_, provider) => provider.statusQuery ?? "",
+      builder: (context, query, child) {
+        return ComboBox<String>(
+          placeholder: const Text("Status"),
+          value: query,
+          items: statusMap.entries.map((e) {
+            return ComboBoxItem(value: e.value, child: Text(e.key));
+          }).toList(),
+          onChanged: (value) {
+            context.read<RunFilterProvider>().setStatus(value);
+          },
+        );
+      },
+    );
 
-      final filterValue = statusMap[statusFilter] ?? "--";
-      final matchesStatus = filterValue == "--"
-          ? true
-          : run.status.toLowerCase() == filterValue.toLowerCase();
-
-      return matchesName && matchesStatus;
-    }).toList();
-
-    filtered.sort((a, b) {
-      return isAscending
-          ? a.createdAt.compareTo(b.createdAt) // ASC
-          : b.createdAt.compareTo(a.createdAt); // DESC
-    });
+    final nameFilter = Selector<RunFilterProvider, String>(
+      selector: (_, provider) => provider.nameQuery,
+      builder: (context, query, child) {
+        return TextBox(
+          controller: _controller,
+          placeholder: 'Search...',
+          prefix: const Padding(
+            padding: EdgeInsets.only(left: 8.0),
+            child: Icon(FluentIcons.search),
+          ),
+          suffixMode: OverlayVisibilityMode.editing,
+          onChanged: (value) {
+            context.read<RunFilterProvider>().setNameContains(value);
+          },
+        );
+      },
+    );
+    final runs = Consumer2<RunProvider, RunFilterProvider>(
+      builder: (context, sourceProvider, filterProvider, child) {
+        final filtered = filterProvider.apply(sourceProvider.runs);
+        if (filtered.isEmpty) {
+          return EmptyState();
+        }
+        return ListView.separated(
+          itemCount: filtered.length,
+          separatorBuilder: (ctx, i) => const Divider(),
+          itemBuilder: (context, index) {
+            return _buildTableRow(context, filtered[index], theme);
+          },
+        );
+      },
+    );
 
     return ScaffoldPage(
       header: PageHeader(
@@ -64,31 +101,8 @@ class _RunsPageState extends State<RunsPage> {
           spacing: 25,
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            ComboBox<String>(
-              placeholder: const Text("Status"),
-              value: statusFilter,
-              items: statusMap.keys.map((e) {
-                return ComboBoxItem(value: e, child: Text(e));
-              }).toList(),
-              onChanged: (value) {
-                if (value != null) setState(() => statusFilter = value);
-              },
-            ),
-            Expanded(
-              child: TextBox(
-                placeholder: 'Search...',
-                prefix: const Padding(
-                  padding: EdgeInsets.only(left: 8.0),
-                  child: Icon(FluentIcons.search),
-                ),
-                suffixMode: OverlayVisibilityMode.editing,
-                suffix: IconButton(
-                  icon: const Icon(FluentIcons.clear),
-                  onPressed: () => setState(() => nameContains = ""),
-                ),
-                onChanged: (value) => setState(() => nameContains = value),
-              ),
-            ),
+            statusFilter,
+            Expanded(child: nameFilter),
           ],
         ),
       ),
@@ -115,26 +129,9 @@ class _RunsPageState extends State<RunsPage> {
                 ),
                 child: Column(
                   children: [
-                    // Header của bảng
                     _buildTableHeader(theme),
                     const Divider(),
-
-                    // Nội dung bảng
-                    Expanded(
-                      child: filtered.isEmpty
-                          ? EmptyState()
-                          : ListView.separated(
-                              itemCount: filtered.length,
-                              separatorBuilder: (ctx, i) => const Divider(),
-                              itemBuilder: (context, index) {
-                                return _buildTableRow(
-                                  context,
-                                  filtered[index],
-                                  theme,
-                                );
-                              },
-                            ),
-                    ),
+                    Expanded(child: runs),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -154,10 +151,7 @@ class _RunsPageState extends State<RunsPage> {
                           bottom: Radius.circular(8),
                         ),
                       ),
-                      child: Text(
-                        "Count: ${filtered.length}",
-                        style: theme.typography.body,
-                      ),
+                      child: Text("Count: 0", style: theme.typography.body),
                     ),
                   ],
                 ),
@@ -259,6 +253,4 @@ class _RunsPageState extends State<RunsPage> {
       ),
     );
   }
-
-  // Widget hiển thị trạng thái (Success/Failure/Pending)
 }
