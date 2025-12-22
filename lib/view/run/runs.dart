@@ -183,15 +183,9 @@ class _RunsPageState extends State<RunsPage> {
               children: [
                 Text("RUN AT", style: headerStyle),
                 IconButton(
-                  icon: Icon(
-                    isAscending
-                        ? FluentIcons.sort_lines_ascending
-                        : FluentIcons.sort_lines,
-                  ),
+                  icon: Icon(FluentIcons.sort),
                   onPressed: () {
-                    setState(() {
-                      isAscending = !isAscending;
-                    });
+                    context.read<RunFilterProvider>().setIsAscending();
                   },
                 ),
               ],

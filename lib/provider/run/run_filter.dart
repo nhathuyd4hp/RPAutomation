@@ -5,9 +5,11 @@ class RunFilterProvider extends ChangeNotifier {
   // Các field cần lọc
   String _nameQuery = "";
   String? _statusQuery;
+  bool _isAscending = false;
   // Getter
   String get nameQuery => _nameQuery;
   String? get statusQuery => _statusQuery;
+  bool get isAscending => _isAscending;
   // Setter
   void setNameContains(String query) {
     if (_nameQuery == query) return;
@@ -21,17 +23,23 @@ class RunFilterProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setIsAscending() {
+    _isAscending = !_isAscending;
+    notifyListeners();
+  }
+
   // Clear
   void clear() {
     _nameQuery = "";
     _statusQuery = "";
+    _isAscending = true;
     notifyListeners();
   }
 
   List<Run> apply(List<Run> source) {
-    return source.where((run) {
+    final filtered = source.where((run) {
       final nameOk =
-          _nameQuery == "" ||
+          _nameQuery.isEmpty ||
           run.robot.toLowerCase().contains(_nameQuery.toLowerCase());
 
       final statusOk =
@@ -40,5 +48,15 @@ class RunFilterProvider extends ChangeNotifier {
 
       return nameOk && statusOk;
     }).toList();
+
+    filtered.sort((a, b) {
+      if (_isAscending) {
+        return a.createdAt.compareTo(b.createdAt);
+      } else {
+        return b.createdAt.compareTo(a.createdAt);
+      }
+    });
+
+    return filtered;
   }
 }
