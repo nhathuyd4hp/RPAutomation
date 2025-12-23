@@ -18,8 +18,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
   WindowOptions windowOptions = const WindowOptions(
-    minimumSize: Size(1200, 800),
-    size: Size(1200, 800),
+    minimumSize: Size(1400, 800),
+    size: Size(1400, 800),
     center: true,
   );
   windowManager.waitUntilReadyToShow(windowOptions, () async {

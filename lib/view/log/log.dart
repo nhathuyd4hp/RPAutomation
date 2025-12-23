@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:path/path.dart' as p;
 import 'dart:convert';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:http/http.dart' as http;
@@ -21,10 +22,12 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
   List<LogEntry> logs = [];
   String? selectedRunId;
   StreamSubscription? _logSubscription;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void dispose() {
     _logSubscription?.cancel();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -56,6 +59,21 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
     }
   }
 
+  void _scrollToBottom() {
+    // addPostFrameCallback đảm bảo việc cuộn chỉ xảy ra SAU KHI danh sách đã render xong item mới
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+        // Hoặc dùng jumpTo nếu không muốn hiệu ứng cuộn:
+        // _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final runProvider = context.watch<RunProvider>();
@@ -64,6 +82,7 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
     if (selectedRunId != null) {
       currentRun = runProvider.runs.firstWhere((r) => r.id == selectedRunId);
     }
+    _scrollToBottom();
     return ScaffoldPage(
       header: PageHeader(
         padding: 0,
@@ -122,6 +141,7 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
                     const Divider(),
                     Expanded(
                       child: ListView.separated(
+                        controller: _scrollController,
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         itemCount: logs.length,
                         separatorBuilder: (ctx, i) => Divider(
@@ -170,7 +190,7 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "Run Details: ${run.id}",
+                "Run ID: ${run.id}",
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -190,12 +210,15 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
                 run.createdAt.toString(),
                 FluentIcons.clock,
               ),
-              Expanded(
-                child: _buildInfoItem(
-                  "Parameters",
-                  run.parameters ?? "",
-                  FluentIcons.variable,
-                ),
+              _buildInfoItem(
+                "Parameters",
+                run.parameters ?? "",
+                FluentIcons.variable,
+              ),
+              _buildInfoItem(
+                "Result",
+                run.result != null ? p.basename(run.result!) : "",
+                FluentIcons.doc_library,
               ),
             ],
           ),
