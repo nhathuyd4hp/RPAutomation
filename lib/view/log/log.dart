@@ -10,6 +10,7 @@ import 'package:task_distribution/main.dart';
 import 'package:task_distribution/model/log.dart';
 import 'package:task_distribution/model/run.dart';
 import 'package:task_distribution/provider/run/run.dart';
+import 'package:task_distribution/provider/run/run_filter.dart'; // Import quan trọng
 
 class ExecutionLogPage extends StatefulWidget {
   const ExecutionLogPage({super.key});
@@ -20,9 +21,23 @@ class ExecutionLogPage extends StatefulWidget {
 
 class _ExecutionLogPageState extends State<ExecutionLogPage> {
   List<LogEntry> logs = [];
-  String? selectedRunId;
   StreamSubscription? _logSubscription;
   final ScrollController _scrollController = ScrollController();
+
+  // Biến local để so sánh tránh loop
+  String? _currentLoadedId;
+
+  @override
+  void initState() {
+    super.initState();
+    // 1. LOGIC TỰ ĐỘNG LOAD:
+    // Lấy ID đang được chọn trong Provider (do trang Runs gửi sang)
+    final providerId = context.read<RunFilterProvider>().selectedId;
+    if (providerId != null) {
+      _currentLoadedId = providerId;
+      _connectLogStream(providerId);
+    }
+  }
 
   @override
   void dispose() {
@@ -34,8 +49,11 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
   void _connectLogStream(String runId) async {
     await _logSubscription?.cancel();
 
+    if (!mounted) return;
     setState(() {
       logs.clear();
+      // Update lại local state để UI sync
+      _currentLoadedId = runId;
     });
 
     try {
@@ -50,8 +68,7 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
               if (line.trim().isEmpty) return;
               if (mounted) {
                 setState(() {
-                  final logEntry = LogEntry.fromRawLine(line);
-                  logs.add(logEntry);
+                  logs.add(LogEntry.fromRawLine(line));
                 });
                 _scrollToBottom();
               }
@@ -77,16 +94,24 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
   @override
   Widget build(BuildContext context) {
     final runProvider = context.watch<RunProvider>();
+    final filterProvider = context.watch<RunFilterProvider>(); // Watch filter
     final theme = FluentTheme.of(context);
 
+    // Ưu tiên lấy ID từ Provider (Single Source of Truth)
+    final displayId = filterProvider.selectedId;
+
     Run? currentRun;
-    if (selectedRunId != null) {
+    if (displayId != null) {
       try {
-        currentRun = runProvider.runs.firstWhere((r) => r.id == selectedRunId);
+        currentRun = runProvider.runs.firstWhere((r) => r.id == displayId);
       } catch (_) {}
     }
 
-    _scrollToBottom();
+    // Logic phụ: Nếu Provider đổi ID mà stream chưa đổi (trường hợp hiếm), connect lại
+    if (displayId != null && displayId != _currentLoadedId) {
+      // Dùng microtask để tránh lỗi setState trong build
+      Future.microtask(() => _connectLogStream(displayId));
+    }
 
     return ScaffoldPage(
       header: PageHeader(
@@ -94,6 +119,10 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
         title: const Text('Execution Log'),
         commandBar: AutoSuggestBox<String>(
           placeholder: 'Search...',
+          // Hiển thị ID đang chọn lên ô tìm kiếm
+          controller: displayId != null
+              ? TextEditingController(text: displayId)
+              : null,
           leadingIcon: const Padding(
             padding: EdgeInsets.all(8.0),
             child: Icon(FluentIcons.search),
@@ -107,13 +136,17 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
                 style: const TextStyle(fontWeight: FontWeight.w500),
               ),
               onSelected: () {
-                setState(() {
-                  selectedRunId = run.id;
-                });
-                _connectLogStream(run.id);
+                // Khi chọn ở đây, update ngược lại vào Provider
+                context.read<RunFilterProvider>().setSelectedId(run.id);
+                // Hàm build sẽ chạy lại và trigger logic _connectLogStream ở trên
               },
             );
           }).toList(),
+          onChanged: (text, reason) {
+            if (reason == TextChangedReason.userInput && text.isEmpty) {
+              // Clear
+            }
+          },
         ),
       ),
       content: Padding(
@@ -122,7 +155,7 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
           spacing: 16,
           children: [
             // 1. Info Panel
-            if (selectedRunId != null && currentRun != null)
+            if (displayId != null && currentRun != null)
               _buildRunInfoPanel(theme, currentRun),
 
             // 2. Log Table
@@ -148,7 +181,13 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
                     const Divider(),
                     Expanded(
                       child: logs.isEmpty
-                          ? const Center(child: Text("Waiting for logs..."))
+                          ? Center(
+                              child: Text(
+                                displayId == null
+                                    ? "Select a run to view logs"
+                                    : "Waiting for logs...",
+                              ),
+                            )
                           : ListView.separated(
                               controller: _scrollController,
                               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -178,7 +217,7 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
     );
   }
 
-  // --- UI COMPONENTS ---
+  // --- UI COMPONENTS (Giữ nguyên layout bạn đã duyệt) ---
 
   Widget _buildRunInfoPanel(FluentThemeData theme, Run run) {
     return Container(
@@ -220,7 +259,7 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
               _buildInfoItem("Robot Name", run.robot, FluentIcons.robot),
               _buildInfoItem(
                 "Started At",
-                run.createdAt.toString().split('.')[0], // Format nhẹ cho gọn
+                run.createdAt.toString().split('.')[0],
                 FluentIcons.clock,
               ),
               _buildInfoItem(
@@ -259,7 +298,6 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
     );
   }
 
-  // Header Bảng Log
   Widget _buildLogTableHeader(FluentThemeData theme, Run? run) {
     final style = TextStyle(
       fontSize: 12,
@@ -273,8 +311,6 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
           SizedBox(width: 180, child: Text("TIMESTAMP", style: style)),
           SizedBox(width: 100, child: Text("LEVEL", style: style)),
           Expanded(child: Text("MESSAGE", style: style)),
-
-          // Nút Result nằm ở header
           SizedBox(
             width: 100,
             child: Align(
@@ -292,12 +328,10 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
     );
   }
 
-  // Row Bảng Log
   Widget _buildLogTableRow(LogEntry log, FluentThemeData theme) {
     final monoStyle = TextStyle(
       fontSize: 13,
-      fontFamily:
-          'Consolas', // Dùng font monospace cho log nhìn chuyên nghiệp hơn
+      fontFamily: 'Consolas',
       color: theme.typography.body!.color,
     );
 
@@ -306,21 +340,15 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Timestamp (Cố định 180 khớp Header)
           SizedBox(
             width: 180,
             child: Text(
-              log.timestamp
-                  .toIso8601String()
-                  .split('T')[1]
-                  .split('.')[0], // Chỉ hiện giờ:phút:giây
+              log.timestamp.toIso8601String().split('T')[1].split('.')[0],
               style: monoStyle.copyWith(
                 color: theme.resources.textFillColorPrimary,
               ),
             ),
           ),
-
-          // 2. Level (Cố định 100 khớp Header)
           SizedBox(
             width: 100,
             child: Align(
@@ -328,17 +356,7 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
               child: LogText(level: log.level),
             ),
           ),
-
-          // 3. Message (Expanded)
-          Expanded(
-            child: SelectableText(
-              // Cho phép copy log
-              log.message,
-              style: monoStyle,
-            ),
-          ),
-
-          // 4. Spacer (Cố định 100) -> QUAN TRỌNG: Để cột Message không bị tràn lấn sang chỗ nút Result ở Header
+          Expanded(child: SelectableText(log.message, style: monoStyle)),
           const SizedBox(width: 100),
         ],
       ),

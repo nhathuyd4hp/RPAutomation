@@ -3,6 +3,7 @@ import "package:fluent_ui/fluent_ui.dart";
 import "package:provider/provider.dart";
 import "package:task_distribution/core/widget/empty_state.dart";
 import "package:task_distribution/core/widget/run_status_badge.dart";
+import "package:task_distribution/provider/page.dart";
 import "package:task_distribution/provider/run/run_filter.dart";
 import "package:task_distribution/model/run.dart";
 import "package:task_distribution/provider/run/run.dart";
@@ -330,7 +331,10 @@ class _RunsPageState extends State<RunsPage> {
             alignment: Alignment.centerRight,
             child: IconButton(
               icon: Icon(FluentIcons.info, color: theme.accentColor, size: 16),
-              onPressed: () {},
+              onPressed: () {
+                context.read<RunFilterProvider>().setSelectedId(run.id);
+                context.read<PageProvider>().setPage(AppPage.log);
+              },
             ),
           ),
         ],

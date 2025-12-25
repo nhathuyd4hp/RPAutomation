@@ -8,6 +8,8 @@ class RunFilterProvider extends ChangeNotifier {
   String _nameQuery = "";
   String? _statusQuery;
   bool _isAscending = false;
+  //
+  String? _selectedId;
   // --- PAGINATION STATE (Mới) ---
   int _currentPage = 1;
   int _itemsPerPage = 10;
@@ -17,7 +19,13 @@ class RunFilterProvider extends ChangeNotifier {
   bool get isAscending => _isAscending;
   int get currentPage => _currentPage;
   int get itemsPerPage => _itemsPerPage;
+  String? get selectedId => _selectedId;
   // Setter
+  void setSelectedId(String? id) {
+    _selectedId = id;
+    notifyListeners();
+  }
+
   void setNameContains(String query) {
     if (_nameQuery == query) return;
     _nameQuery = query;
