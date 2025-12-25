@@ -38,27 +38,31 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
       logs.clear();
     });
 
-    final uri = Uri.parse('${TaskDistribution.backendUrl}/api/logs/$runId');
-    final request = http.Request('GET', uri);
-    final response = await request.send();
-    if (response.statusCode == 200) {
-      _logSubscription = response.stream
-          .transform(utf8.decoder)
-          .transform(const LineSplitter())
-          .listen((String line) {
-            if (line.trim().isEmpty) return;
-            if (mounted) {
-              setState(() {
-                final logEntry = LogEntry.fromRawLine(line);
-                logs.add(logEntry);
-              });
-            }
-          });
+    try {
+      final uri = Uri.parse('${TaskDistribution.backendUrl}/api/logs/$runId');
+      final request = http.Request('GET', uri);
+      final response = await request.send();
+      if (response.statusCode == 200) {
+        _logSubscription = response.stream
+            .transform(utf8.decoder)
+            .transform(const LineSplitter())
+            .listen((String line) {
+              if (line.trim().isEmpty) return;
+              if (mounted) {
+                setState(() {
+                  final logEntry = LogEntry.fromRawLine(line);
+                  logs.add(logEntry);
+                });
+                _scrollToBottom();
+              }
+            });
+      }
+    } catch (e) {
+      debugPrint("Error fetching logs: $e");
     }
   }
 
   void _scrollToBottom() {
-    // addPostFrameCallback đảm bảo việc cuộn chỉ xảy ra SAU KHI danh sách đã render xong item mới
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
@@ -66,8 +70,6 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
-        // Hoặc dùng jumpTo nếu không muốn hiệu ứng cuộn:
-        // _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
       }
     });
   }
@@ -76,11 +78,16 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
   Widget build(BuildContext context) {
     final runProvider = context.watch<RunProvider>();
     final theme = FluentTheme.of(context);
+
     Run? currentRun;
     if (selectedRunId != null) {
-      currentRun = runProvider.runs.firstWhere((r) => r.id == selectedRunId);
+      try {
+        currentRun = runProvider.runs.firstWhere((r) => r.id == selectedRunId);
+      } catch (_) {}
     }
+
     _scrollToBottom();
+
     return ScaffoldPage(
       header: PageHeader(
         padding: 0,
@@ -109,14 +116,16 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
           }).toList(),
         ),
       ),
-
       content: Padding(
         padding: const EdgeInsets.all(0),
         child: Column(
           spacing: 16,
           children: [
+            // 1. Info Panel
             if (selectedRunId != null && currentRun != null)
               _buildRunInfoPanel(theme, currentRun),
+
+            // 2. Log Table
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
@@ -138,22 +147,26 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
                     _buildLogTableHeader(theme, currentRun),
                     const Divider(),
                     Expanded(
-                      child: ListView.separated(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: logs.length,
-                        separatorBuilder: (ctx, i) => Divider(
-                          style: DividerThemeData(
-                            thickness: 0.5,
-                            decoration: BoxDecoration(
-                              color: theme.resources.dividerStrokeColorDefault,
+                      child: logs.isEmpty
+                          ? const Center(child: Text("Waiting for logs..."))
+                          : ListView.separated(
+                              controller: _scrollController,
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              itemCount: logs.length,
+                              separatorBuilder: (ctx, i) => Divider(
+                                style: DividerThemeData(
+                                  thickness: 0.5,
+                                  decoration: BoxDecoration(
+                                    color: theme
+                                        .resources
+                                        .dividerStrokeColorDefault,
+                                  ),
+                                ),
+                              ),
+                              itemBuilder: (context, index) {
+                                return _buildLogTableRow(logs[index], theme);
+                              },
                             ),
-                          ),
-                        ),
-                        itemBuilder: (context, index) {
-                          return _buildLogTableRow(logs[index], theme);
-                        },
-                      ),
                     ),
                   ],
                 ),
@@ -164,6 +177,8 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
       ),
     );
   }
+
+  // --- UI COMPONENTS ---
 
   Widget _buildRunInfoPanel(FluentThemeData theme, Run run) {
     return Container(
@@ -205,17 +220,17 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
               _buildInfoItem("Robot Name", run.robot, FluentIcons.robot),
               _buildInfoItem(
                 "Started At",
-                run.createdAt.toString(),
+                run.createdAt.toString().split('.')[0], // Format nhẹ cho gọn
                 FluentIcons.clock,
               ),
               _buildInfoItem(
                 "Parameters",
-                run.parameters ?? "",
+                run.parameters ?? "None",
                 FluentIcons.variable,
               ),
               _buildInfoItem(
                 "Result",
-                run.result != null ? p.basename(run.result!) : "",
+                run.result != null ? p.basename(run.result!) : "None",
                 FluentIcons.doc_library,
               ),
             ],
@@ -244,6 +259,7 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
     );
   }
 
+  // Header Bảng Log
   Widget _buildLogTableHeader(FluentThemeData theme, Run? run) {
     final style = TextStyle(
       fontSize: 12,
@@ -254,19 +270,21 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          SizedBox(width: 200, child: Text("TIMESTAMP", style: style)),
+          SizedBox(width: 180, child: Text("TIMESTAMP", style: style)),
           SizedBox(width: 100, child: Text("LEVEL", style: style)),
           Expanded(child: Text("MESSAGE", style: style)),
+
+          // Nút Result nằm ở header
           SizedBox(
             width: 100,
-            child: FilledButton(
-              child: const Text("Result"),
-              onPressed: () {
-                if (run != null) {
-                  final provider = context.read<RunProvider>();
-                  provider.download(run);
-                }
-              },
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: FilledButton(
+                onPressed: (run != null)
+                    ? () => context.read<RunProvider>().download(run)
+                    : null,
+                child: const Text("Result"),
+              ),
             ),
           ),
         ],
@@ -274,9 +292,12 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
     );
   }
 
+  // Row Bảng Log
   Widget _buildLogTableRow(LogEntry log, FluentThemeData theme) {
     final monoStyle = TextStyle(
       fontSize: 13,
+      fontFamily:
+          'Consolas', // Dùng font monospace cho log nhìn chuyên nghiệp hơn
       color: theme.typography.body!.color,
     );
 
@@ -285,20 +306,40 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Timestamp
+          // 1. Timestamp (Cố định 180 khớp Header)
           SizedBox(
-            width: 200,
+            width: 180,
             child: Text(
-              log.timestamp.toIso8601String(),
+              log.timestamp
+                  .toIso8601String()
+                  .split('T')[1]
+                  .split('.')[0], // Chỉ hiện giờ:phút:giây
               style: monoStyle.copyWith(
                 color: theme.resources.textFillColorPrimary,
               ),
             ),
           ),
-          // 2. Level
-          SizedBox(width: 100, child: LogText(level: log.level)),
-          // 3. Message
-          Expanded(child: Text(log.message, style: monoStyle, softWrap: true)),
+
+          // 2. Level (Cố định 100 khớp Header)
+          SizedBox(
+            width: 100,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: LogText(level: log.level),
+            ),
+          ),
+
+          // 3. Message (Expanded)
+          Expanded(
+            child: SelectableText(
+              // Cho phép copy log
+              log.message,
+              style: monoStyle,
+            ),
+          ),
+
+          // 4. Spacer (Cố định 100) -> QUAN TRỌNG: Để cột Message không bị tràn lấn sang chỗ nút Result ở Header
+          const SizedBox(width: 100),
         ],
       ),
     );
