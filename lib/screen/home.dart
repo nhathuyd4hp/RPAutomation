@@ -42,7 +42,7 @@ class _HomeState extends State<Home> {
       final msg = server.errorMessage!;
 
       // Show Notification
-      _showLocalNotification("ERR", msg);
+      _showLocalNotification("ERROR", msg);
 
       // Show InfoBar
       _showInfoBar(msg, InfoBarSeverity.error);
