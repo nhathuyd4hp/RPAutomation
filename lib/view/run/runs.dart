@@ -1,9 +1,9 @@
+import "dart:math"; // Import để tính toán phân trang
 import "package:fluent_ui/fluent_ui.dart";
 import "package:provider/provider.dart";
 import "package:task_distribution/core/widget/empty_state.dart";
 import "package:task_distribution/core/widget/run_status_badge.dart";
 import "package:task_distribution/provider/run/run_filter.dart";
-import "package:task_distribution/view/run/widget/information_dialog.dart";
 import "package:task_distribution/model/run.dart";
 import "package:task_distribution/provider/run/run.dart";
 
@@ -15,10 +15,9 @@ class RunsPage extends StatefulWidget {
 }
 
 class _RunsPageState extends State<RunsPage> {
-  bool isAscending = true;
-  late TextEditingController _controller;
+  late TextEditingController _searchController;
 
-  final Map<String, String> statusMap = {
+  static const Map<String, String> statusMap = {
     "--": "",
     "Cancel": "Cancel",
     "Waiting": "Waiting",
@@ -31,12 +30,12 @@ class _RunsPageState extends State<RunsPage> {
   void initState() {
     super.initState();
     final initialQuery = context.read<RunFilterProvider>().nameQuery;
-    _controller = TextEditingController(text: initialQuery);
+    _searchController = TextEditingController(text: initialQuery);
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -44,125 +43,214 @@ class _RunsPageState extends State<RunsPage> {
   Widget build(BuildContext context) {
     final theme = FluentTheme.of(context);
 
-    final statusFilter = Selector<RunFilterProvider, String>(
-      selector: (_, provider) => provider.statusQuery ?? "",
-      builder: (context, query, child) {
-        return ComboBox<String>(
-          placeholder: const Text("Status"),
-          value: query,
-          items: statusMap.entries.map((e) {
-            return ComboBoxItem(value: e.value, child: Text(e.key));
-          }).toList(),
-          onChanged: (value) {
-            context.read<RunFilterProvider>().setStatus(value);
+    // Toolbar
+    final toolbar = Row(
+      children: [
+        Selector<RunFilterProvider, String>(
+          selector: (_, provider) => provider.statusQuery ?? "",
+          builder: (context, query, child) {
+            return ComboBox<String>(
+              placeholder: const Text("Status"),
+              value: query,
+              items: statusMap.entries.map((e) {
+                return ComboBoxItem(value: e.value, child: Text(e.key));
+              }).toList(),
+              onChanged: (value) {
+                context.read<RunFilterProvider>().setStatus(value);
+              },
+            );
           },
-        );
-      },
-    );
-
-    final nameFilter = Selector<RunFilterProvider, String>(
-      selector: (_, provider) => provider.nameQuery,
-      builder: (context, query, child) {
-        return TextBox(
-          controller: _controller,
-          placeholder: 'Search...',
-          prefix: const Padding(
-            padding: EdgeInsets.only(left: 8.0),
-            child: Icon(FluentIcons.search),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Selector<RunFilterProvider, String>(
+            selector: (_, provider) => provider.nameQuery,
+            builder: (context, query, child) {
+              if (_searchController.text != query) {
+                _searchController.text = query;
+                _searchController.selection = TextSelection.fromPosition(
+                  TextPosition(offset: _searchController.text.length),
+                );
+              }
+              return TextBox(
+                controller: _searchController,
+                placeholder: 'Search...',
+                prefix: const Padding(
+                  padding: EdgeInsets.only(left: 8.0),
+                  child: Icon(FluentIcons.search),
+                ),
+                suffixMode: OverlayVisibilityMode.editing,
+                suffix: IconButton(
+                  icon: const Icon(FluentIcons.clear),
+                  onPressed: () {
+                    context.read<RunFilterProvider>().setNameContains("");
+                    _searchController.clear();
+                  },
+                ),
+                onChanged: (value) {
+                  context.read<RunFilterProvider>().setNameContains(value);
+                },
+              );
+            },
           ),
-          suffixMode: OverlayVisibilityMode.editing,
-          onChanged: (value) {
-            context.read<RunFilterProvider>().setNameContains(value);
-          },
-        );
-      },
-    );
-    final runs = Consumer2<RunProvider, RunFilterProvider>(
-      builder: (context, sourceProvider, filterProvider, child) {
-        final filtered = filterProvider.apply(sourceProvider.runs);
-        if (filtered.isEmpty) {
-          return EmptyState();
-        }
-        return ListView.separated(
-          itemCount: filtered.length,
-          separatorBuilder: (ctx, i) => const Divider(),
-          itemBuilder: (context, index) {
-            return _buildTableRow(context, filtered[index], theme);
-          },
-        );
-      },
+        ),
+      ],
     );
 
     return ScaffoldPage(
       header: PageHeader(
         padding: 0,
-        title: const Text('Runs'),
-        commandBar: Row(
-          spacing: 25,
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            statusFilter,
-            Expanded(child: nameFilter),
-          ],
-        ),
+        title: const Text('Runs History'),
+        commandBar: SizedBox(width: 500, child: toolbar),
       ),
       content: Padding(
         padding: const EdgeInsets.all(0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: theme.cardColor,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: theme.resources.dividerStrokeColorDefault,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    _buildTableHeader(theme),
-                    const Divider(),
-                    Expanded(child: runs),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
-                      ),
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: theme.scaffoldBackgroundColor.withValues(
-                          alpha: 0.5,
-                        ),
-                        border: Border(
-                          top: BorderSide(
-                            color: theme.resources.dividerStrokeColorDefault,
-                          ),
-                        ),
-                        borderRadius: const BorderRadius.vertical(
-                          bottom: Radius.circular(8),
-                        ),
-                      ),
-                      child: Text("Count: 0", style: theme.typography.body),
-                    ),
-                  ],
-                ),
-              ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: theme.cardColor,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: theme.resources.dividerStrokeColorDefault,
             ),
-          ],
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+
+          // CONSUMER: Xử lý cả Filter và Pagination
+          child: Consumer2<RunProvider, RunFilterProvider>(
+            builder: (context, runProvider, filterProvider, child) {
+              // 1. Lấy toàn bộ danh sách đã filter (để đếm tổng)
+              final fullFilteredList = filterProvider.apply(runProvider.runs);
+
+              // 2. Cắt danh sách theo trang hiện tại (để hiển thị)
+              final paginatedList = filterProvider.paginate(fullFilteredList);
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildTableHeader(theme),
+                  const Divider(),
+
+                  // Hiển thị danh sách PAGINATED (chỉ 10 item)
+                  Expanded(
+                    child: paginatedList.isEmpty
+                        ? const EmptyState()
+                        : ListView.separated(
+                            itemCount: paginatedList.length,
+                            separatorBuilder: (ctx, i) => const Divider(),
+                            itemBuilder: (context, index) {
+                              return _buildTableRow(
+                                context,
+                                paginatedList[index],
+                                theme,
+                              );
+                            },
+                          ),
+                  ),
+
+                  // Footer Pagination: Truyền vào TỔNG SỐ item
+                  _buildPaginationFooter(
+                    context,
+                    theme,
+                    filterProvider,
+                    fullFilteredList.length,
+                  ),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
   }
 
+  // --- FOOTER PHÂN TRANG (MỚI) ---
+  Widget _buildPaginationFooter(
+    BuildContext context,
+    FluentThemeData theme,
+    RunFilterProvider provider,
+    int totalItems,
+  ) {
+    // Tính toán số liệu hiển thị
+    final totalPages = (totalItems / provider.itemsPerPage).ceil();
+    final currentPage = totalPages > 0
+        ? min(provider.currentPage, totalPages)
+        : 1;
+    final startItem = totalItems == 0
+        ? 0
+        : (currentPage - 1) * provider.itemsPerPage + 1;
+    final endItem = min(currentPage * provider.itemsPerPage, totalItems);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor.withValues(alpha: 0.5),
+        border: Border(
+          top: BorderSide(color: theme.resources.dividerStrokeColorDefault),
+        ),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8)),
+      ),
+      child: Row(
+        children: [
+          Text("Rows per page:", style: theme.typography.caption),
+          const SizedBox(width: 8),
+          ComboBox<int>(
+            value: provider.itemsPerPage,
+            items: const [
+              ComboBoxItem(value: 10, child: Text("10")),
+              ComboBoxItem(value: 20, child: Text("20")),
+              ComboBoxItem(value: 30, child: Text("30")),
+              ComboBoxItem(value: 50, child: Text("50")),
+            ],
+            onChanged: (value) {
+              if (value != null) provider.setItemsPerPage(value);
+            },
+          ),
+
+          const Spacer(),
+
+          // 2. Hiển thị Range (1-10 of 50)
+          Text(
+            "$startItem-$endItem of $totalItems items",
+            style: theme.typography.caption,
+          ),
+          const SizedBox(width: 16),
+
+          // 3. Nút Previous
+          IconButton(
+            icon: const Icon(FluentIcons.chevron_left, size: 12),
+            onPressed: currentPage > 1
+                ? () => provider.setPage(currentPage - 1)
+                : null,
+          ),
+
+          // 4. Số trang
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Text(
+              "$currentPage / ${totalPages == 0 ? 1 : totalPages}",
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+
+          // 5. Nút Next
+          IconButton(
+            icon: const Icon(FluentIcons.chevron_right, size: 12),
+            onPressed: currentPage < totalPages
+                ? () => provider.setPage(currentPage + 1)
+                : null,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- Header Table ---
   Widget _buildTableHeader(FluentThemeData theme) {
     final headerStyle = TextStyle(
       fontSize: 12,
@@ -175,30 +263,33 @@ class _RunsPageState extends State<RunsPage> {
         children: [
           SizedBox(width: 300, child: Text("ID", style: headerStyle)),
           Expanded(child: Text("ROBOT NAME", style: headerStyle)),
-          SizedBox(width: 150, child: Text("STATUS", style: headerStyle)),
+          SizedBox(width: 120, child: Text("STATUS", style: headerStyle)),
           SizedBox(
-            width: 250,
+            width: 200,
             child: Row(
-              spacing: 5,
               children: [
                 Text("RUN AT", style: headerStyle),
+                const SizedBox(width: 4),
                 IconButton(
-                  icon: Icon(FluentIcons.sort),
-                  onPressed: () {
-                    context.read<RunFilterProvider>().setIsAscending();
-                  },
+                  icon: const Icon(FluentIcons.sort, size: 12),
+                  onPressed: () =>
+                      context.read<RunFilterProvider>().setIsAscending(),
                 ),
               ],
             ),
           ),
-          SizedBox(width: 100, child: Text("ACTIONS", style: headerStyle)),
+          Container(
+            width: 80,
+            alignment: Alignment.centerRight,
+            child: Text("ACTION", style: headerStyle),
+          ),
         ],
       ),
     );
   }
 
+  // --- Table Row ---
   Widget _buildTableRow(BuildContext context, Run run, FluentThemeData theme) {
-    final robotName = run.robot;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
@@ -212,35 +303,34 @@ class _RunsPageState extends State<RunsPage> {
           ),
           Expanded(
             child: Text(
-              robotName,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              run.robot,
+              style: const TextStyle(fontWeight: FontWeight.w500),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          SizedBox(width: 150, child: RunStatusBadge(run: run)),
           SizedBox(
-            width: 250,
+            width: 120,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: RunStatusBadge(run: run),
+            ),
+          ),
+          SizedBox(
+            width: 200,
             child: Text(
               run.createdAt.toString().split('.')[0],
               style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
                 color: theme.resources.textFillColorSecondary,
+                fontSize: 13,
               ),
             ),
           ),
-          SizedBox(
-            width: 100,
+          Container(
+            width: 80,
+            alignment: Alignment.centerRight,
             child: IconButton(
-              icon: Icon(FluentIcons.info, color: theme.accentColor, size: 18),
-              onPressed: () async {
-                final provider = context.read<RunProvider>();
-                final result = await showDialog(
-                  context: context,
-                  builder: (ctx) =>
-                      InformationDialog(dialogContext: ctx, run: run),
-                );
-                if (result != null) provider.download(run);
-              },
+              icon: Icon(FluentIcons.info, color: theme.accentColor, size: 16),
+              onPressed: () {},
             ),
           ),
         ],

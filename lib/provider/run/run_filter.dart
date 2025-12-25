@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 import 'package:task_distribution/model/run.dart';
 
@@ -6,10 +8,15 @@ class RunFilterProvider extends ChangeNotifier {
   String _nameQuery = "";
   String? _statusQuery;
   bool _isAscending = false;
+  // --- PAGINATION STATE (Mới) ---
+  int _currentPage = 1;
+  int _itemsPerPage = 10;
   // Getter
   String get nameQuery => _nameQuery;
   String? get statusQuery => _statusQuery;
   bool get isAscending => _isAscending;
+  int get currentPage => _currentPage;
+  int get itemsPerPage => _itemsPerPage;
   // Setter
   void setNameContains(String query) {
     if (_nameQuery == query) return;
@@ -28,11 +35,24 @@ class RunFilterProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setPage(int page) {
+    _currentPage = page;
+    notifyListeners();
+  }
+
+  void setItemsPerPage(int count) {
+    if (_itemsPerPage == count) return;
+    _itemsPerPage = count;
+    _currentPage = 1;
+    notifyListeners();
+  }
+
   // Clear
   void clear() {
     _nameQuery = "";
     _statusQuery = "";
     _isAscending = true;
+    _currentPage = 1;
     notifyListeners();
   }
 
@@ -58,5 +78,16 @@ class RunFilterProvider extends ChangeNotifier {
     });
 
     return filtered;
+  }
+
+  // 2. Cắt trang (Trả về danh sách hiển thị cho UI)
+  List<Run> paginate(List<Run> filteredList) {
+    if (filteredList.isEmpty) return [];
+    final startIndex = (_currentPage - 1) * _itemsPerPage;
+    if (startIndex >= filteredList.length) {
+      return [];
+    }
+    final endIndex = min(startIndex + _itemsPerPage, filteredList.length);
+    return filteredList.sublist(startIndex, endIndex);
   }
 }
