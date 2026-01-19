@@ -264,7 +264,9 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
               ),
               _buildInfoItem(
                 "Parameters",
-                run.parameters ?? "",
+                run.parameters != null
+                    ? jsonDecode(run.parameters!).toString()
+                    : "",
                 FluentIcons.variable,
               ),
               _buildInfoItem(
