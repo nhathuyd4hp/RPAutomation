@@ -77,19 +77,9 @@ class _RunFormState extends State<RunForm> {
               placeholder: 'No file selected',
               readOnly: true,
               controller: TextEditingController(text: currentPath),
-              suffix: currentPath.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(FluentIcons.clear),
-                      onPressed: () {
-                        setState(() {
-                          _controllers[parameter.name] = null;
-                        });
-                      },
-                    )
-                  : null,
             ),
           ),
-          Button(
+          FilledButton(
             onPressed: _idLoading[parameter.name] == true
                 ? null
                 : () async {
@@ -123,6 +113,7 @@ class _RunFormState extends State<RunForm> {
                           _idLoading[parameter.name] = false;
                         });
                       }
+                      return;
                     }
                     final Map<String, dynamic> responseJSON = jsonDecode(
                       response.body,
@@ -144,7 +135,7 @@ class _RunFormState extends State<RunForm> {
                     height: 19,
                     child: const ProgressRing(strokeWidth: 2.5),
                   )
-                : Icon(FluentIcons.folder_open),
+                : Icon(FluentIcons.file_request),
           ),
         ],
       );
