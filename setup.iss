@@ -20,7 +20,7 @@ DisableProgramGroupPage=yes
 
 PrivilegesRequired=admin
 
-OutputBaseFilename=mysetup
+OutputBaseFilename=robot
 SolidCompression=yes
 WizardStyle=modern dynamic
 
