@@ -38,8 +38,8 @@ class RunProvider extends ChangeNotifier {
   }
 
   Future<void> download(Run run) async {
-    if (run.status != "SUCCESS" || run.result == null) {
-      return;
+    if (run.status != "SUCCESS" || run.result == null || run.result == "") {
+      return server.notification("Không tìm thấy file kết quả");
     }
     final String? directoryPath = await FilePicker.platform.getDirectoryPath(
       dialogTitle: "Save",
