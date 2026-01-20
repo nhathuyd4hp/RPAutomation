@@ -402,31 +402,36 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
                 : FilledButton(
                     onPressed: () async {
                       // ... Bên trong hàm hiển thị dialog của bạn
+                      // Gọi hàm này trong sự kiện onPressed
                       await showDialog(
                         context: context,
                         builder: (context) => FutureBuilder<RError?>(
+                          // Gọi API lấy chi tiết lỗi
                           future: _getRError(context, run.id),
                           builder: (context, snapshot) {
-                            // 1. Trạng thái Loading
+                            // ---------------------------------------------------------
+                            // TRƯỜNG HỢP 1: ĐANG TẢI (LOADING)
+                            // ---------------------------------------------------------
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
                               return const ContentDialog(
-                                title: Text("Loading..."),
+                                title: Text("Loading details..."),
                                 content: SizedBox(
-                                  height: 50,
-                                  child: Center(
-                                    child: ProgressRing(),
-                                  ), // Dùng ProgressRing thay vì ProgressBar
+                                  height: 60,
+                                  child: Center(child: ProgressRing()),
                                 ),
                               );
                             }
 
-                            // 2. Trạng thái Lỗi khi gọi API
+                            // ---------------------------------------------------------
+                            // TRƯỜNG HỢP 2: CÓ LỖI HOẶC KHÔNG CÓ DỮ LIỆU
+                            // ---------------------------------------------------------
                             if (snapshot.hasError || snapshot.data == null) {
                               return ContentDialog(
                                 title: const Text("Error"),
                                 content: Text(
-                                  'Could not load details: ${snapshot.error ?? "Data is null"}',
+                                  'Could not load error details:\n${snapshot.error ?? "Data is null"}',
+                                  style: TextStyle(color: Colors.red),
                                 ),
                                 actions: [
                                   Button(
@@ -436,69 +441,100 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
                                 ],
                               );
                             }
+
+                            // ---------------------------------------------------------
+                            // TRƯỜNG HỢP 3: THÀNH CÔNG (HIỂN THỊ DATA)
+                            // ---------------------------------------------------------
                             final error = snapshot.data!;
+
                             return ContentDialog(
+                              // Tiêu đề là Loại lỗi (Tô đỏ cho nổi bật)
                               title: Text(
                                 error.errorType,
-                                style: TextStyle(color: Colors.red),
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
+
+                              // Nội dung chính
                               content: Column(
-                                spacing: 10,
-                                mainAxisSize: MainAxisSize.min,
+                                mainAxisSize: MainAxisSize
+                                    .min, // Chỉ chiếm không gian cần thiết
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
-                                    "Message:",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
+                                  Expander(
+                                    initiallyExpanded: true,
+                                    header: Row(
+                                      children: [
+                                        Icon(
+                                          FluentIcons.info,
+                                          size: 16,
+                                          color: Colors.red,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        const Text(
+                                          "Error Message",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                  Container(
-                                    margin: const EdgeInsets.only(
-                                      top: 4,
-                                      bottom: 12,
-                                    ),
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: Colors.red.withValues(
-                                        alpha: 0.1,
-                                      ), // Nền đỏ nhạt cảnh báo
-                                      borderRadius: BorderRadius.circular(4),
-                                      border: Border.all(
+                                    content: Container(
+                                      width: double
+                                          .infinity, // Mở rộng full chiều ngang
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
                                         color: Colors.red.withValues(
-                                          alpha: 0.3,
+                                          alpha: 0.05,
+                                        ), // Nền đỏ rất nhạt
+                                        borderRadius: BorderRadius.circular(4),
+                                        border: Border.all(
+                                          color: Colors.red.withValues(
+                                            alpha: 0.1,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    child: SelectableText(
-                                      error.message,
-                                      style: const TextStyle(fontSize: 13),
+                                      child: SelectableText(
+                                        error.message,
+                                        style: const TextStyle(fontSize: 13),
+                                      ),
                                     ),
                                   ),
+
+                                  const SizedBox(height: 12),
+
+                                  // --- Hàng 3: Traceback Header ---
                                   const Text(
                                     "Traceback:",
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
+                                  const SizedBox(height: 4),
+
+                                  // --- Hàng 4: Traceback Content (Cuộn được) ---
                                   Expanded(
                                     child: TextBox(
                                       readOnly: true,
-                                      maxLines: null,
-                                      expands: true,
-                                      highlightColor: Colors.red,
+                                      maxLines: null, // Cho phép nhiều dòng
+                                      expands:
+                                          true, // Bắt buộc để fill hết chiều cao còn lại của Expanded
                                       controller: TextEditingController(
                                         text: error.traceback,
                                       ),
                                       style: const TextStyle(
-                                        fontFamily: 'Consolas',
+                                        fontFamily:
+                                            'Consolas', // Font code chuyên dụng (hoặc Courier New)
                                         fontSize: 12,
                                       ),
                                     ),
                                   ),
                                 ],
                               ),
-                              constraints: const BoxConstraints(maxWidth: 500),
+
+                              constraints: const BoxConstraints(maxWidth: 850),
                               actions: [
                                 Button(
                                   child: const Text('Close'),
