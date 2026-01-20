@@ -39,10 +39,7 @@ class RobotProvider extends ChangeNotifier {
 
   Future<void> run(Map<String, dynamic> parameters) async {
     final Run? run = await repository.run(parameters);
-    if (run != null) {
-      server.notification("Yêu cầu thành công");
-    } else {
-      server.notification("Yêu cầu thất bại");
-    }
+    if (run != null) return;
+    server.notification("Yêu cầu thất bại");
   }
 }
