@@ -42,7 +42,10 @@ class RunClient {
   //   return apiResponse.data;
   // }
 
-  Future<bool> result({required Run run, required String savePath}) async {
+  Future<bool> downloadResult({
+    required Run run,
+    required String savePath,
+  }) async {
     if (run.result == null) return false;
     // Tách chuỗi
     final List<String> parts = run.result!.split('/');
@@ -57,5 +60,11 @@ class RunClient {
     final file = File(filePath);
     await file.writeAsBytes(response.bodyBytes);
     return true;
+  }
+
+  Future<bool> stop(Run run) async {
+    final url = Uri.parse("$backend/api/runs/${run.id}/stop");
+    final response = await http.post(url);
+    return response.statusCode == 200;
   }
 }

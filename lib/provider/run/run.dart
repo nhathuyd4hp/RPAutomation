@@ -48,7 +48,7 @@ class RunProvider extends ChangeNotifier {
     if (directoryPath == null) {
       return;
     }
-    final bool success = await repository.result(
+    final bool success = await repository.downloadResult(
       run: run,
       savePath: directoryPath,
     );
@@ -59,5 +59,14 @@ class RunProvider extends ChangeNotifier {
         await OpenFile.open(directoryPath);
       },
     );
+  }
+
+  Future<void> stop(Run run) async {
+    final bool success = await repository.stop(run);
+    if (!success) {
+      server.notification("Không thể dừng ${run.robot}");
+      return;
+    }
+    server.notification("Đã gửi yêu cầu dừng ${run.robot}");
   }
 }

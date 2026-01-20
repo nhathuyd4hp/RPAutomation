@@ -365,10 +365,30 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
           Expanded(child: Text("MESSAGE", style: style)),
           SizedBox(
             width: 125,
-            child: run != null && run.result != null && run.status == "SUCCESS"
+            child: run == null
+                ? null
+                : run.status == "PENDING" || run.status == "WAITING"
                 ? FilledButton(
-                    onPressed: () => {
-                      context.read<RunProvider>().download(run),
+                    onPressed: () {
+                      context.read<RunProvider>().stop(run);
+                    },
+                    style: ButtonStyle(
+                      backgroundColor: WidgetStatePropertyAll(
+                        Color(0xFFD32F2F),
+                      ),
+                    ),
+                    child: Row(
+                      spacing: 10,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(FluentIcons.pause, size: 16),
+                        Text("Stop"),
+                      ],
+                    ),
+                  )
+                : FilledButton(
+                    onPressed: () {
+                      context.read<RunProvider>().download(run);
                     },
                     child: Row(
                       spacing: 10,
@@ -378,8 +398,7 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
                         Text("Download"),
                       ],
                     ),
-                  )
-                : null,
+                  ),
           ),
         ],
       ),
