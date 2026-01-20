@@ -71,7 +71,7 @@ jobs:
             *Bản build tự động từ hệ thống GitHub Actions.*
   build-linux-deb:
     runs-on: ubuntu-22.04
-    needs: build-windows-installer
+
 
     steps:
       - name: Checkout source
