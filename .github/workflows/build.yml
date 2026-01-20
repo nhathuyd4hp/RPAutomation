@@ -36,6 +36,12 @@ jobs:
       - name: Install Inno Setup
         run: choco install innosetup --yes
 
+      - name: Download VC Redist (x64)
+        shell: powershell
+        run: |
+          Invoke-WebRequest -Uri "https://aka.ms/vc14/vc_redist.x64.exe" -OutFile "VC_redist.x64.exe"
+          Write-Host "Download VC Redist x64 completed."
+
       - name: Compile .ISS to .EXE
         run: iscc "setup.iss"
 
