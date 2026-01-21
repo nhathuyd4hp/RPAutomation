@@ -10,35 +10,39 @@ class RunStatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     Color bgColor;
     Color textColor;
-    IconData icon;
+    Widget prefix;
     String text = run.status;
 
     switch (run.status.toLowerCase()) {
       case 'waiting':
         bgColor = const Color(0xFFFFF8E1);
         textColor = const Color(0xFFF9A825);
-        icon = FluentIcons.hour_glass;
+        prefix = Icon(FluentIcons.hour_glass, size: 15, color: textColor);
         break;
       case 'success':
         bgColor = const Color(0xFFE8F5E9);
         textColor = const Color(0xFF2E7D32);
-        icon = FluentIcons.completed12;
+        prefix = Icon(FluentIcons.completed12, size: 15, color: textColor);
         break;
       case 'failure':
       case 'error':
         bgColor = const Color(0xFFFFEBEE);
         textColor = const Color(0xFFC62828);
-        icon = FluentIcons.error;
+        prefix = Icon(FluentIcons.error, size: 15, color: textColor);
         break;
       case 'pending':
         bgColor = const Color(0xFFE3F2FD);
         textColor = const Color(0xFF1565C0);
-        icon = FluentIcons.clock;
+        prefix = SizedBox(
+          height: 15,
+          width: 15,
+          child: ProgressRing(strokeWidth: 2.5, activeColor: textColor),
+        );
         break;
       default:
         bgColor = const Color(0xFFF5F5F5);
         textColor = const Color(0xFF616161);
-        icon = FluentIcons.unknown;
+        prefix = Icon(FluentIcons.unknown, size: 15, color: textColor);
     }
 
     return Container(
@@ -52,7 +56,7 @@ class RunStatusBadge extends StatelessWidget {
         spacing: 8,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 15, color: textColor),
+          prefix,
           Text(
             text,
             style: TextStyle(

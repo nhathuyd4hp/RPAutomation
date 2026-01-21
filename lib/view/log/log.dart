@@ -52,7 +52,6 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
     if (!mounted) return;
     setState(() {
       logs.clear();
-      // Update lại local state để UI sync
       _currentLoadedId = runId;
     });
 
@@ -401,52 +400,43 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
                   )
                 : FilledButton(
                     onPressed: () async {
-                      // ... Bên trong hàm hiển thị dialog của bạn
-                      // Gọi hàm này trong sự kiện onPressed
                       await showDialog(
                         context: context,
                         builder: (context) => FutureBuilder<RError?>(
-                          // Gọi API lấy chi tiết lỗi
                           future: _getRError(context, run.id),
                           builder: (context, snapshot) {
-                            // ---------------------------------------------------------
+                            // -------------------------------------
                             // TRƯỜNG HỢP 1: ĐANG TẢI (LOADING)
-                            // ---------------------------------------------------------
+                            // -------------------------------------
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
                               return const ContentDialog(
-                                title: Text("Loading details..."),
+                                title: Text("Loading..."),
                                 content: SizedBox(
                                   height: 60,
                                   child: Center(child: ProgressRing()),
                                 ),
                               );
                             }
-
                             // ---------------------------------------------------------
                             // TRƯỜNG HỢP 2: CÓ LỖI HOẶC KHÔNG CÓ DỮ LIỆU
                             // ---------------------------------------------------------
+                            RError error;
                             if (snapshot.hasError || snapshot.data == null) {
-                              return ContentDialog(
-                                title: const Text("Error"),
-                                content: Text(
-                                  'Could not load error details:\n${snapshot.error ?? "Data is null"}',
-                                  style: TextStyle(color: Colors.red),
-                                ),
-                                actions: [
-                                  Button(
-                                    child: const Text('Close'),
-                                    onPressed: () => Navigator.pop(context),
-                                  ),
-                                ],
+                              error = RError(
+                                id: run.id,
+                                runId: run.id,
+                                createdAt: DateTime.now(),
+                                errorType: "Unknown",
+                                message: run.result ?? "",
+                                traceback: run.result ?? "",
                               );
+                            } else {
+                              error = snapshot.data!;
                             }
-
                             // ---------------------------------------------------------
                             // TRƯỜNG HỢP 3: THÀNH CÔNG (HIỂN THỊ DATA)
                             // ---------------------------------------------------------
-                            final error = snapshot.data!;
-
                             return ContentDialog(
                               // Tiêu đề là Loại lỗi (Tô đỏ cho nổi bật)
                               title: Text(
@@ -456,11 +446,8 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-
-                              // Nội dung chính
                               content: Column(
-                                mainAxisSize: MainAxisSize
-                                    .min, // Chỉ chiếm không gian cần thiết
+                                mainAxisSize: MainAxisSize.min,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Expander(
@@ -482,8 +469,7 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
                                       ],
                                     ),
                                     content: Container(
-                                      width: double
-                                          .infinity, // Mở rộng full chiều ngang
+                                      width: double.infinity,
                                       padding: const EdgeInsets.all(10),
                                       decoration: BoxDecoration(
                                         color: Colors.red.withValues(
@@ -502,10 +488,7 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
                                       ),
                                     ),
                                   ),
-
                                   const SizedBox(height: 12),
-
-                                  // --- Hàng 3: Traceback Header ---
                                   const Text(
                                     "Traceback:",
                                     style: TextStyle(
@@ -513,27 +496,22 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
                                     ),
                                   ),
                                   const SizedBox(height: 4),
-
-                                  // --- Hàng 4: Traceback Content (Cuộn được) ---
                                   Expanded(
                                     child: TextBox(
                                       readOnly: true,
-                                      maxLines: null, // Cho phép nhiều dòng
-                                      expands:
-                                          true, // Bắt buộc để fill hết chiều cao còn lại của Expanded
+                                      maxLines: null,
+                                      expands: true,
                                       controller: TextEditingController(
                                         text: error.traceback,
                                       ),
                                       style: const TextStyle(
-                                        fontFamily:
-                                            'Consolas', // Font code chuyên dụng (hoặc Courier New)
+                                        fontFamily: 'Consolas',
                                         fontSize: 12,
                                       ),
                                     ),
                                   ),
                                 ],
                               ),
-
                               constraints: const BoxConstraints(maxWidth: 850),
                               actions: [
                                 Button(
