@@ -9,9 +9,7 @@ class Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final pageState = context.watch<PageProvider>();
-    //
     final theme = FluentTheme.of(context);
-
     return Container(
       height: 65,
       padding: const EdgeInsets.symmetric(horizontal: 24),

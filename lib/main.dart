@@ -12,6 +12,7 @@ import 'package:task_distribution/providers/robot/robot.dart';
 import 'package:task_distribution/providers/socket.dart';
 import 'package:task_distribution/data/services/run.dart';
 import 'package:task_distribution/data/services/schedule.dart';
+import 'package:task_distribution/shared/constraints/theme.dart';
 import 'package:window_manager/window_manager.dart';
 
 void main() async {
@@ -97,26 +98,8 @@ class RobotAutomation extends StatelessWidget {
         title: "Robot Automation",
         debugShowCheckedModeBanner: false,
         themeMode: ThemeMode.system,
-        // --- LIGHT THEME ---
-        theme: FluentThemeData(
-          accentColor: Colors.teal,
-          brightness: Brightness.light,
-          visualDensity: VisualDensity.standard,
-          focusTheme: FocusThemeData(
-            glowFactor: is10footScreen(context) ? 2.0 : 0.0,
-          ),
-        ),
-        // --- DARK THEME ---
-        darkTheme: FluentThemeData(
-          accentColor: Colors.teal,
-          brightness: Brightness.dark,
-          scaffoldBackgroundColor: const Color(0xff111823),
-          cardColor: const Color(0xff19222c),
-          visualDensity: VisualDensity.standard,
-          focusTheme: FocusThemeData(
-            glowFactor: is10footScreen(context) ? 2.0 : 0.0,
-          ),
-        ),
+        theme: lightTheme,
+        darkTheme: darkTheme,
         home: Home(),
       ),
     );
