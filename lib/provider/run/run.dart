@@ -11,28 +11,15 @@ class RunProvider extends ChangeNotifier {
   final RunClient repository;
   final ServerProvider server;
   List<Run> _runs = [];
-  bool _isLoading = false;
-  String? _errorMessage;
   // Getter
   List<Run> get runs => _runs;
-  bool get isLoading => _isLoading;
-  String? get errorMessage => _errorMessage;
   // Constructor
   RunProvider({required this.repository, required this.server});
   // bindServer
   Future<void> bindServer() async {
-    if (server.status == ConnectionStatus.connecting) {
-      _isLoading = true;
-      _runs = [];
-    }
     if (server.status == ConnectionStatus.connected) {
-      _isLoading = false;
-      _errorMessage = null;
       _runs = await repository.getRuns();
-    }
-    if (server.status == ConnectionStatus.disconnected) {
-      _isLoading = false;
-      _errorMessage = server.errorMessage;
+    } else {
       _runs = [];
     }
     notifyListeners();

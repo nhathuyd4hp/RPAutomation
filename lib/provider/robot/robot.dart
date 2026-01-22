@@ -9,29 +9,15 @@ class RobotProvider extends ChangeNotifier {
   final RobotClient repository;
   final ServerProvider server;
   List<Robot> _robots = [];
-  bool _isLoading = false;
-  String? _errorMessage;
   // Getter
   List<Robot> get robots => _robots;
-  bool get isLoading => _isLoading;
-  String? get errorMessage => _errorMessage;
   // Constructor
   RobotProvider({required this.server, required this.repository});
   // bindServer
   Future<void> bindServer() async {
-    if (server.status == ConnectionStatus.connecting) {
-      _isLoading = true;
-      _errorMessage = null;
-      _robots = [];
-    }
     if (server.status == ConnectionStatus.connected) {
-      _isLoading = false;
-      _errorMessage = null;
       _robots = await repository.getRobots();
-    }
-    if (server.status == ConnectionStatus.disconnected) {
-      _isLoading = false;
-      _errorMessage = server.errorMessage;
+    } else {
       _robots = [];
     }
     notifyListeners();
