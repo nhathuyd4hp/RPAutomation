@@ -182,7 +182,7 @@ class _SchedulePageState extends State<SchedulePage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          Expanded(flex: 3, child: Text("ROBOT NAME", style: headerStyle)),
+          Expanded(flex: 3, child: Text("ROBOT", style: headerStyle)),
           Expanded(flex: 1, child: Text("STATUS", style: headerStyle)),
           Expanded(flex: 2, child: Text("NEXT RUN", style: headerStyle)),
           Expanded(flex: 2, child: Text("START DATE", style: headerStyle)),

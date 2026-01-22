@@ -172,7 +172,6 @@ class _RunsPageState extends State<RunsPage> {
                 children: [
                   _buildTableHeader(theme),
                   const Divider(),
-
                   // Hiển thị danh sách PAGINATED (chỉ 10 item)
                   Expanded(
                     child: paginatedList.isEmpty
@@ -195,7 +194,6 @@ class _RunsPageState extends State<RunsPage> {
                             },
                           ),
                   ),
-
                   // Footer Pagination: Truyền vào TỔNG SỐ item
                   _buildPaginationFooter(
                     context,
@@ -304,8 +302,8 @@ class _RunsPageState extends State<RunsPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          SizedBox(width: 350, child: Text("ID", style: headerStyle)),
-          Expanded(child: Text("ROBOT NAME", style: headerStyle)),
+          SizedBox(width: 300, child: Text("ID", style: headerStyle)),
+          Expanded(child: Text("ROBOT", style: headerStyle)),
           SizedBox(width: 150, child: Text("STATUS", style: headerStyle)),
           SizedBox(
             width: 200,
@@ -338,7 +336,7 @@ class _RunsPageState extends State<RunsPage> {
       child: Row(
         children: [
           SizedBox(
-            width: 350,
+            width: 300,
             child: SelectableText(
               run.id,
               style: const TextStyle(fontWeight: FontWeight.w600),

@@ -272,7 +272,7 @@ class _RobotPageState extends State<RobotPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          Expanded(child: Text("ROBOT NAME", style: headerStyle)),
+          Expanded(child: Text("ROBOT", style: headerStyle)),
           SizedBox(width: 100, child: Text("STATUS", style: headerStyle)),
           Container(
             width: 220,

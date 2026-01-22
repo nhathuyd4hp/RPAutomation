@@ -26,7 +26,6 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
   StreamSubscription? _logSubscription;
   final ScrollController _scrollController = ScrollController();
 
-  // Biến local để so sánh tránh loop
   String? _currentLoadedId;
 
   @override
@@ -101,7 +100,6 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
     final server = context.watch<ServerProvider>();
     final theme = FluentTheme.of(context);
 
-    // Ưu tiên lấy ID từ Provider (Single Source of Truth)
     final displayId = filterProvider.selectedId;
 
     Run? currentRun;
@@ -111,9 +109,7 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
       } catch (_) {}
     }
 
-    // Logic phụ: Nếu Provider đổi ID mà stream chưa đổi (trường hợp hiếm), connect lại
     if (displayId != null && displayId != _currentLoadedId) {
-      // Dùng microtask để tránh lỗi setState trong build
       Future.microtask(() => _connectLogStream(displayId));
     }
 
@@ -139,17 +135,10 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
                 style: const TextStyle(fontWeight: FontWeight.w500),
               ),
               onSelected: () {
-                // Khi chọn ở đây, update ngược lại vào Provider
                 context.read<RunFilterProvider>().setSelectedId(run.id);
-                // Hàm build sẽ chạy lại và trigger logic _connectLogStream ở trên
               },
             );
           }).toList(),
-          onChanged: (text, reason) {
-            if (reason == TextChangedReason.userInput && text.isEmpty) {
-              // Clear
-            }
-          },
         ),
       ),
       content: Padding(
@@ -157,11 +146,8 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
         child: Column(
           spacing: 16,
           children: [
-            // 1. Info Panel
             if (displayId != null && currentRun != null)
               _buildRunInfoPanel(theme, currentRun),
-
-            // 2. Log Table
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
@@ -304,7 +290,7 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
           const Divider(),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 50,
+            spacing: 25,
             children: [
               _buildInfoItem("Robot", run.robot, FluentIcons.robot),
               _buildInfoItem(
@@ -324,7 +310,7 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
                 run.status == "SUCCESS"
                     ? (run.result != null ? p.basename(run.result!) : "")
                     : "",
-                FluentIcons.doc_library,
+                FluentIcons.file_system,
               ),
             ],
           ),
