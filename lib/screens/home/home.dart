@@ -1,7 +1,7 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import "package:local_notifier/local_notifier.dart";
 import 'package:provider/provider.dart';
-import 'package:task_distribution/screens/widgets/header.dart';
+import 'package:task_distribution/shared/widgets/header.dart';
 import "package:task_distribution/providers/page.dart";
 import "package:task_distribution/providers/socket.dart";
 import "package:task_distribution/screens/home/views/log/log.dart";

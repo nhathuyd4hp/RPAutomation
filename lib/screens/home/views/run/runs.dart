@@ -2,7 +2,7 @@ import "dart:math";
 import "package:fluent_ui/fluent_ui.dart";
 import "package:lottie/lottie.dart";
 import "package:provider/provider.dart";
-import "package:task_distribution/screens/widgets/run_status_badge.dart";
+import "package:task_distribution/shared/widgets/run_status_badge.dart";
 import "package:task_distribution/providers/page.dart";
 import "package:task_distribution/providers/run/run_filter.dart";
 import "package:task_distribution/data/model/run.dart";

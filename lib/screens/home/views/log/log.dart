@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
-import 'package:task_distribution/screens/widgets/run_status_badge.dart';
+import 'package:task_distribution/shared/widgets/run_status_badge.dart';
 import 'package:task_distribution/main.dart';
 import 'package:task_distribution/data/model/log.dart';
 import 'package:task_distribution/data/model/run.dart';
