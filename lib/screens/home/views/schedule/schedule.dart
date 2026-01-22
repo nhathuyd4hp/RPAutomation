@@ -79,7 +79,11 @@ class _SchedulePageState extends State<SchedulePage> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const ProgressRing(),
+                            Lottie.asset(
+                              'assets/lottie/Loading.json',
+                              width: 250,
+                              height: 250,
+                            ),
                             const SizedBox(height: 12),
                             Text(
                               "Connecting to server...",

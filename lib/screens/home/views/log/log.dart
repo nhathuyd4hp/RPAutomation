@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:lottie/lottie.dart';
 import 'package:path/path.dart' as p;
 import 'dart:convert';
 import 'package:fluent_ui/fluent_ui.dart';
@@ -174,7 +175,11 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
                                   ? Column(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        const ProgressRing(),
+                                        Lottie.asset(
+                                          'assets/lottie/Loading.json',
+                                          width: 250,
+                                          height: 250,
+                                        ),
                                         const SizedBox(height: 12),
                                         Text(
                                           "Connecting to server...",
@@ -362,36 +367,12 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
           Spacer(),
           SizedBox(
             width: 105,
-            child: run == null
+            child: (run == null)
                 ? null
                 : run.status == "PENDING" || run.status == "WAITING"
-                ? FilledButton(
-                    onPressed: () {
-                      context.read<RunProvider>().stop(run);
-                    },
-                    child: Row(
-                      spacing: 5,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(FluentIcons.pause, size: 12),
-                        Text("Stop"),
-                      ],
-                    ),
-                  )
+                ? StopAction(context: context, run: run)
                 : run.status != "FAILURE"
-                ? FilledButton(
-                    onPressed: () {
-                      context.read<RunProvider>().download(run);
-                    },
-                    child: Row(
-                      spacing: 5,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(FluentIcons.download, size: 12),
-                        Text("Download"),
-                      ],
-                    ),
-                  )
+                ? DownloadAction(context: context, run: run)
                 : FilledButton(
                     onPressed: () async {
                       await showDialog(
@@ -399,40 +380,43 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
                         builder: (context) => FutureBuilder<RError?>(
                           future: _getRError(context, run.id),
                           builder: (context, snapshot) {
-                            // -------------------------------------
-                            // TRƯỜNG HỢP 1: ĐANG TẢI (LOADING)
-                            // -------------------------------------
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
-                              return const ContentDialog(
-                                title: Text("Loading..."),
+                              return ContentDialog(
+                                title: Row(
+                                  spacing: 5,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Lottie.asset(
+                                      'assets/lottie/Loading.json',
+                                      width: 32,
+                                      height: 32,
+                                    ),
+                                    Text("Loading..."),
+                                  ],
+                                ),
                                 content: SizedBox(
                                   height: 60,
-                                  child: Center(child: ProgressRing()),
+                                  child: Center(child: ProgressBar()),
                                 ),
                               );
                             }
-                            // ---------------------------------------------------------
-                            // TRƯỜNG HỢP 2: CÓ LỖI HOẶC KHÔNG CÓ DỮ LIỆU
-                            // ---------------------------------------------------------
                             RError error;
                             if (snapshot.hasError || snapshot.data == null) {
                               error = RError(
                                 id: run.id,
                                 runId: run.id,
                                 createdAt: DateTime.now(),
-                                errorType: "Unknown",
+                                errorType: "Error",
                                 message: run.result ?? "",
                                 traceback: run.result ?? "",
                               );
                             } else {
                               error = snapshot.data!;
                             }
-                            // ---------------------------------------------------------
-                            // TRƯỜNG HỢP 3: THÀNH CÔNG (HIỂN THỊ DATA)
-                            // ---------------------------------------------------------
                             return ContentDialog(
-                              // Tiêu đề là Loại lỗi (Tô đỏ cho nổi bật)
+                              constraints: const BoxConstraints(maxWidth: 850),
                               title: Text(
                                 error.errorType,
                                 style: TextStyle(
@@ -506,7 +490,7 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
                                   ),
                                 ],
                               ),
-                              constraints: const BoxConstraints(maxWidth: 850),
+
                               actions: [
                                 Button(
                                   child: const Text('Close'),
@@ -573,6 +557,48 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
           ),
           Expanded(child: SelectableText(log.message, style: monoStyle)),
         ],
+      ),
+    );
+  }
+}
+
+class DownloadAction extends StatelessWidget {
+  final Run run;
+  const DownloadAction({super.key, required this.context, required this.run});
+
+  final BuildContext context;
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton(
+      onPressed: () {
+        context.read<RunProvider>().download(run);
+      },
+      child: Row(
+        spacing: 5,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [Icon(FluentIcons.download, size: 12), Text("Download")],
+      ),
+    );
+  }
+}
+
+class StopAction extends StatelessWidget {
+  final Run run;
+  const StopAction({super.key, required this.context, required this.run});
+
+  final BuildContext context;
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton(
+      onPressed: () {
+        context.read<RunProvider>().stop(run);
+      },
+      child: Row(
+        spacing: 5,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [Icon(FluentIcons.pause, size: 12), Text("Stop")],
       ),
     );
   }
