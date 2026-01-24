@@ -102,8 +102,14 @@ class ServerProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Bắn thông báo
-  void notification(String message, {VoidCallback? callBack, String? note}) {
+  // Mở thông báo [Error]
+  void error(String message) {
+    _errorMessage = message;
+    notifyListeners();
+  }
+
+  // Mở thông báo [Info]
+  void info(String message, {VoidCallback? callBack, String? note}) {
     _latestMessage = message;
     _callBack = callBack;
     _note = note;

@@ -296,7 +296,7 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
           const Divider(),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 20,
+            spacing: 35,
             children: [
               _buildInfoItem("Robot", run.robot, FluentIcons.robot),
               _buildInfoItem(

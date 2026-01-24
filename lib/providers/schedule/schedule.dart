@@ -26,21 +26,19 @@ class ScheduleProvider extends ChangeNotifier {
   Future<void> deleteSchedule(Schedule schedule) async {
     final bool success = await repository.delete(schedule);
     if (!success) {
-      return server.notification("Xóa lịch trình `${schedule.name}` thất bại");
+      return server.info("Xóa lịch trình `${schedule.name}` thất bại");
     }
-    return server.notification("Xóa lịch trình `${schedule.name}` thành công");
+    return server.info("Xóa lịch trình `${schedule.name}` thành công");
   }
 
   Future<void> setSchedule(Robot robot, Map<String, String> schedule) async {
     if (schedule['day_of_week'] == null || schedule['day_of_week'] == "") {
-      return server.notification(
-        "${robot.name}: cần chọn ít nhất 1 ngày chạy.",
-      );
+      return server.info("${robot.name}: cần chọn ít nhất 1 ngày chạy.");
     }
     final Schedule? record = await repository.setSchedule(robot, schedule);
     if (record == null) {
-      return server.notification("Cài lịch cho ${robot.name} lỗi");
+      return server.info("Cài lịch cho ${robot.name} lỗi");
     }
-    return server.notification("Cài lịch cho ${robot.name} thành công");
+    return server.info("Cài lịch cho ${robot.name} thành công");
   }
 }

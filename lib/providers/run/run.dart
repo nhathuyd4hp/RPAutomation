@@ -28,21 +28,19 @@ class RunProvider extends ChangeNotifier {
 
   Future<void> download(Run run) async {
     if (run.status != "SUCCESS" || run.result == null || run.result == "") {
-      return server.notification("Không tìm thấy file kết quả");
+      return server.error("Không tìm thấy file kết quả");
     }
     final String? directoryPath = await FilePicker.platform.getDirectoryPath(
       dialogTitle: "Save",
       lockParentWindow: true,
     );
-    if (directoryPath == null) {
-      return;
-    }
+    if (directoryPath == null) return;
     final bool success = await repository.downloadResult(
       run: run,
       savePath: directoryPath,
     );
-    if (!success) return server.notification("Lưu thất bại!");
-    server.notification(
+    if (!success) return server.info("Không tìm thấy file kết quả");
+    server.info(
       "Lưu ${p.basename(run.result!)} thành công",
       callBack: () async {
         await OpenFile.open(directoryPath);
@@ -54,10 +52,9 @@ class RunProvider extends ChangeNotifier {
   Future<void> stop(Run run) async {
     final bool success = await repository.stop(run);
     if (!success) {
-      server.notification("Không thể dừng ${run.robot}");
-      return;
+      return server.error("Yêu cầu dừng ${run.robot} thất bại");
     }
-    server.notification("Đã gửi yêu cầu dừng ${run.robot}");
+    server.info("Đã gửi yêu cầu dừng ${run.robot}");
   }
 
   Future<RError?> getError(String id) async {

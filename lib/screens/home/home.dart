@@ -40,18 +40,7 @@ class _HomeState extends State<Home> {
     // Xử lý Error
     if (server.errorMessage != null) {
       final msg = server.errorMessage!;
-      final callback = server.callBack;
-      final note = server.note;
-      if (msg.toLowerCase().contains(
-        "WebSocketChannelException".toLowerCase(),
-      )) {
-        _showInfoBar(msg, InfoBarSeverity.error);
-      } else {
-        _showLocalNotification("Thông báo", msg, callback, note);
-      }
-
-      server.clearNote();
-      server.clearCallBack();
+      _showInfoBar(msg, InfoBarSeverity.error);
       server.clearErrorMessage();
     }
 
@@ -97,9 +86,9 @@ class _HomeState extends State<Home> {
       context,
       builder: (context, close) {
         return InfoBar(
-          title: Text(""),
-          content: Text(message),
-          severity: severity,
+          title: const Text(""),
+          content: Text(message, style: TextStyle(fontWeight: FontWeight.w600)),
+          severity: InfoBarSeverity.error,
           onClose: close,
         );
       },
