@@ -36,23 +36,36 @@ class RunProvider extends ChangeNotifier {
         return server.error("Không tìm thấy file kết quả");
       }
       final String? directoryPath = await FilePicker.platform.getDirectoryPath(
-        dialogTitle: "Save",
-        lockParentWindow: true,
+        dialogTitle: "Save ${p.basename(run.result!)}",
+        lockParentWindow: false,
       );
       if (directoryPath == null) return;
       _downloading[run.id] = true;
       notifyListeners();
       await Future.delayed(const Duration(milliseconds: 250));
-      if (!await repository.download(run: run, savePath: directoryPath)) {
-        return server.info("Không tìm thấy file kết quả");
-      }
-      server.info(
-        "Lưu ${p.basename(run.result!)} thành công",
-        callBack: () async {
-          await OpenFile.open(directoryPath);
-        },
-        note: "Xem",
-      );
+      Future(() async {
+        try {
+          if (!await repository.download(run: run, savePath: directoryPath)) {
+            server.info("Không tìm thấy file kết quả");
+            return;
+          }
+          server.info(
+            "Lưu thành công",
+            actions: {
+              "Mở thư mục": () async {
+                await OpenFile.open(directoryPath);
+              },
+              "Mở file": () async {
+                final filePath = p.join(directoryPath, p.basename(run.result!));
+                await OpenFile.open(filePath);
+              },
+            },
+          );
+        } finally {
+          _downloading[run.id] = false;
+          notifyListeners();
+        }
+      });
     } finally {
       _downloading[run.id] = false;
       notifyListeners();

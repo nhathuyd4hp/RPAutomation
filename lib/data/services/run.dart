@@ -6,7 +6,6 @@ import 'package:http/http.dart' as http;
 import 'package:task_distribution/data/model/api_response.dart';
 import 'package:task_distribution/data/model/run_error.dart';
 import 'package:task_distribution/data/model/run.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class RunClient {
   final String backend;
@@ -54,22 +53,24 @@ class RunClient {
     final url = Uri.parse("$backend/api/assets/$bucket?objectName=$objectName");
     final String filePath = p.join(savePath, p.basename(run.result!));
     final file = File(filePath);
-    try {
+    return await Isolate.run<bool>(() async {
       final client = http.Client();
-      final request = http.Request('GET', url);
-      final response = await client.send(request);
-      if (response.statusCode != 200) {
-        client.close();
+      try {
+        final request = http.Request('GET', url);
+        final response = await client.send(request);
+        if (response.statusCode != 200) {
+          return false;
+        }
+        final sink = file.openWrite();
+        await response.stream.pipe(sink);
+        await sink.close();
+        return true;
+      } catch (e) {
         return false;
+      } finally {
+        client.close();
       }
-      final sink = file.openWrite();
-      await response.stream.pipe(sink);
-      await sink.close();
-      client.close();
-      return true;
-    } catch (e) {
-      return false;
-    }
+    });
   }
 
   Future<bool> stop(Run run) async {

@@ -46,13 +46,11 @@ class _HomeState extends State<Home> {
 
     // Xử lý Info Message
     if (server.latestMessage != null) {
-      final msg = server.latestMessage!;
-      final callback = server.callBack;
-      final note = server.note;
-      _showLocalNotification("Thông báo", msg, callback, note);
-
-      server.clearNote();
-      server.clearCallBack();
+      _showLocalNotification(
+        "Thông báo",
+        server.latestMessage!,
+        server.actions,
+      );
       server.clearLatestMessage();
     }
   }
@@ -60,22 +58,22 @@ class _HomeState extends State<Home> {
   void _showLocalNotification(
     String title,
     String body,
-    VoidCallback? callBack,
-    String? note,
+    Map<String, VoidCallback> actions,
   ) {
     final noti = LocalNotification(
       identifier: DateTime.now().toString(),
       title: title,
       body: body,
-      actions: [
-        LocalNotificationAction(text: 'Đóng'),
-        if (callBack != null) LocalNotificationAction(text: note ?? "Chi tiết"),
-      ],
+      actions: actions.keys
+          .map((text) => LocalNotificationAction(text: text))
+          .toList(),
     );
     noti.onClickAction = (actionIndex) {
-      if (actionIndex == 1 && callBack != null) {
-        return callBack();
-      }
+      final key = actions.keys.elementAt(actionIndex);
+      actions[key]?.call();
+      noti.close();
+    };
+    noti.onClick = () {
       noti.close();
     };
     noti.show();

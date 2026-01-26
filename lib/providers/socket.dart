@@ -15,23 +15,16 @@ class ServerProvider extends ChangeNotifier {
   // Latest message
   String? _latestMessage;
   String? get latestMessage => _latestMessage;
-  // callBack message
-  VoidCallback? _callBack;
-  VoidCallback? get callBack => _callBack;
-  // callBack note
-  String? _note;
-  String? get note => _note;
-
-  void clearNote() {
-    _note = null;
-  }
-
-  void clearCallBack() {
-    _callBack = null;
-  }
+  // Actions
+  Map<String, VoidCallback> _actions = {};
+  Map<String, VoidCallback> get actions => _actions;
 
   void clearLatestMessage() {
     _latestMessage = null;
+  }
+
+  void clearActions() {
+    _actions = {};
   }
 
   void clearErrorMessage() {
@@ -109,10 +102,9 @@ class ServerProvider extends ChangeNotifier {
   }
 
   // Mở thông báo [Info]
-  void info(String message, {VoidCallback? callBack, String? note}) {
+  void info(String message, {Map<String, VoidCallback>? actions}) {
     _latestMessage = message;
-    _callBack = callBack;
-    _note = note;
+    _actions = actions ?? {};
     notifyListeners();
   }
 }
