@@ -1,10 +1,12 @@
 import 'dart:convert';
+import 'dart:isolate';
 import 'package:path/path.dart' as p;
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:task_distribution/data/model/api_response.dart';
 import 'package:task_distribution/data/model/run_error.dart';
 import 'package:task_distribution/data/model/run.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class RunClient {
   final String backend;
@@ -43,24 +45,31 @@ class RunClient {
     return apiResponse.data;
   }
 
-  Future<bool> downloadResult({
-    required Run run,
-    required String savePath,
-  }) async {
+  Future<bool> download({required Run run, required String savePath}) async {
     if (run.result == null) return false;
-    // Tách chuỗi
     final List<String> parts = run.result!.split('/');
     final String bucket = parts[0];
     final String objectName = parts.sublist(1).join("/");
     // Call API
     final url = Uri.parse("$backend/api/assets/$bucket?objectName=$objectName");
-    final response = await http.get(url);
-    if (response.statusCode != 200) return false;
-    // Save
     final String filePath = p.join(savePath, p.basename(run.result!));
     final file = File(filePath);
-    await file.writeAsBytes(response.bodyBytes);
-    return true;
+    try {
+      final client = http.Client();
+      final request = http.Request('GET', url);
+      final response = await client.send(request);
+      if (response.statusCode != 200) {
+        client.close();
+        return false;
+      }
+      final sink = file.openWrite();
+      await response.stream.pipe(sink);
+      await sink.close();
+      client.close();
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   Future<bool> stop(Run run) async {

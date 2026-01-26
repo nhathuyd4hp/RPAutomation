@@ -9,6 +9,10 @@ import 'package:task_distribution/data/services/run.dart';
 
 class RunProvider extends ChangeNotifier {
   //
+  // Properties
+  final Map<String, bool> _downloading = {};
+  Map<String, bool> get downloading => _downloading;
+  //
   final RunClient repository;
   final ServerProvider server;
   List<Run> _runs = [];
@@ -27,26 +31,32 @@ class RunProvider extends ChangeNotifier {
   }
 
   Future<void> download(Run run) async {
-    if (run.status != "SUCCESS" || run.result == null || run.result == "") {
-      return server.error("Không tìm thấy file kết quả");
+    try {
+      if (run.status != "SUCCESS" || run.result == null || run.result == "") {
+        return server.error("Không tìm thấy file kết quả");
+      }
+      final String? directoryPath = await FilePicker.platform.getDirectoryPath(
+        dialogTitle: "Save",
+        lockParentWindow: true,
+      );
+      if (directoryPath == null) return;
+      _downloading[run.id] = true;
+      notifyListeners();
+      await Future.delayed(const Duration(milliseconds: 250));
+      if (!await repository.download(run: run, savePath: directoryPath)) {
+        return server.info("Không tìm thấy file kết quả");
+      }
+      server.info(
+        "Lưu ${p.basename(run.result!)} thành công",
+        callBack: () async {
+          await OpenFile.open(directoryPath);
+        },
+        note: "Xem",
+      );
+    } finally {
+      _downloading[run.id] = false;
+      notifyListeners();
     }
-    final String? directoryPath = await FilePicker.platform.getDirectoryPath(
-      dialogTitle: "Save",
-      lockParentWindow: true,
-    );
-    if (directoryPath == null) return;
-    final bool success = await repository.downloadResult(
-      run: run,
-      savePath: directoryPath,
-    );
-    if (!success) return server.info("Không tìm thấy file kết quả");
-    server.info(
-      "Lưu ${p.basename(run.result!)} thành công",
-      callBack: () async {
-        await OpenFile.open(directoryPath);
-      },
-      note: "Xem",
-    );
   }
 
   Future<void> stop(Run run) async {

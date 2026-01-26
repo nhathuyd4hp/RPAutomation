@@ -19,6 +19,7 @@ dependencies:
   open_file: ^3.5.10
   local_notifier: ^0.1.6
   lottie: ^3.3.2
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:

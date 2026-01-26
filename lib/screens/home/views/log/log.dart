@@ -572,6 +572,12 @@ class DownloadAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDownloading = context.select<RunProvider, bool>(
+      (provider) => provider.downloading[run.id] ?? false,
+    );
+    if (isDownloading) {
+      return const ProgressBar();
+    }
     return FilledButton(
       onPressed: () {
         context.read<RunProvider>().download(run);
