@@ -21,9 +21,7 @@ class LogEntry {
 
   factory LogEntry.fromJson(Map<String, dynamic> json) {
     return LogEntry(
-      timestamp: DateTime.parse(
-        json['timestamp'].toString().replaceAll(',', '.'),
-      ),
+      timestamp: DateTime.parse(json['timestamp']).toLocal(),
       level: json['level'] as String,
       message: json['message'] as String,
     );
