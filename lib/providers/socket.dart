@@ -31,11 +31,6 @@ class ServerProvider extends ChangeNotifier {
     _errorMessage = null;
   }
 
-  void setLatestMessage(String message) {
-    _latestMessage = message;
-    notifyListeners();
-  }
-
   // Client
   late WebSocketChannel channel;
   // Khởi tạo

@@ -31,41 +31,39 @@ class RunProvider extends ChangeNotifier {
   }
 
   Future<void> download(Run run) async {
+    if (run.status != "SUCCESS" || run.result == null) {
+      return server.error("Không tìm thấy file kết quả");
+    }
+    final String? directoryPath = await FilePicker.platform.getDirectoryPath(
+      dialogTitle: "Save ${p.basename(run.result!)}",
+    );
+    if (directoryPath == null) return;
     try {
-      if (run.status != "SUCCESS" || run.result == null || run.result == "") {
-        return server.error("Không tìm thấy file kết quả");
-      }
-      final String? directoryPath = await FilePicker.platform.getDirectoryPath(
-        dialogTitle: "Save ${p.basename(run.result!)}",
-        lockParentWindow: false,
-      );
-      if (directoryPath == null) return;
       _downloading[run.id] = true;
       notifyListeners();
-      await Future.delayed(const Duration(milliseconds: 250));
-      Future(() async {
-        try {
-          if (!await repository.download(run: run, savePath: directoryPath)) {
-            server.info("Không tìm thấy file kết quả");
-            return;
-          }
-          server.info(
-            "Lưu thành công",
-            actions: {
-              "Mở thư mục": () async {
-                await OpenFile.open(directoryPath);
-              },
-              "Mở file": () async {
-                final filePath = p.join(directoryPath, p.basename(run.result!));
-                await OpenFile.open(filePath);
-              },
+      final success = await repository.download(
+        run: run,
+        savePath: directoryPath,
+      );
+      if (success) {
+        server.info(
+          "Lưu thành công",
+          actions: {
+            "Mở thư mục": () async {
+              await OpenFile.open(directoryPath);
             },
-          );
-        } finally {
-          _downloading[run.id] = false;
-          notifyListeners();
-        }
-      });
+            "Xem kết quả": () async {
+              final filePath = p.join(directoryPath, p.basename(run.result!));
+
+              await OpenFile.open(filePath);
+            },
+          },
+        );
+      } else {
+        server.info("Tải file thất bại");
+      }
+    } catch (e) {
+      server.error("Lỗi: $e");
     } finally {
       _downloading[run.id] = false;
       notifyListeners();

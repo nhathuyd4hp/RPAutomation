@@ -46,21 +46,19 @@ class RunClient {
 
   Future<bool> download({required Run run, required String savePath}) async {
     if (run.result == null) return false;
-    final List<String> parts = run.result!.split('/');
-    final String bucket = parts[0];
-    final String objectName = parts.sublist(1).join("/");
-    // Call API
-    final url = Uri.parse("$backend/api/assets/$bucket?objectName=$objectName");
-    final String filePath = p.join(savePath, p.basename(run.result!));
-    final file = File(filePath);
+    final String result = run.result!;
+    final String filePath = p.join(savePath, p.basename(result));
+    final List<String> parts = result.split('/');
+    final String urlString =
+        "$backend/api/assets/${parts[0]}?objectName=${parts.sublist(1).join("/")}";
     return await Isolate.run<bool>(() async {
       final client = http.Client();
       try {
-        final request = http.Request('GET', url);
-        final response = await client.send(request);
-        if (response.statusCode != 200) {
-          return false;
-        }
+        final response = await client.send(
+          http.Request('GET', Uri.parse(urlString)),
+        );
+        if (response.statusCode != 200) return false;
+        final file = File(filePath);
         final sink = file.openWrite();
         await response.stream.pipe(sink);
         await sink.close();

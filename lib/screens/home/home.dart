@@ -42,6 +42,7 @@ class _HomeState extends State<Home> {
       final msg = server.errorMessage!;
       _showInfoBar(msg, InfoBarSeverity.error);
       server.clearErrorMessage();
+      server.clearActions();
     }
 
     // Xử lý Info Message
@@ -52,6 +53,7 @@ class _HomeState extends State<Home> {
         server.actions,
       );
       server.clearLatestMessage();
+      server.clearActions();
     }
   }
 
