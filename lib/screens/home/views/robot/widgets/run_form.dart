@@ -88,7 +88,12 @@ class _RunFormState extends State<RunForm> {
                           dialogTitle: "Select a file",
                           lockParentWindow: true,
                           allowMultiple: false,
-                          type: FileType.any,
+                          type: parameter.defaultValue == null
+                              ? FileType.any
+                              : FileType.custom,
+                          allowedExtensions: parameter.defaultValue == null
+                              ? null
+                              : [parameter.defaultValue],
                         );
                     if (result == null) return;
                     setState(() {
