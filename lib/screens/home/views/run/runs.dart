@@ -301,11 +301,11 @@ class _RunsPageState extends State<RunsPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          SizedBox(width: 280, child: Text("ID", style: headerStyle)),
+          SizedBox(width: 300, child: Text("ID", style: headerStyle)),
           Expanded(child: Text("ROBOT", style: headerStyle)),
           SizedBox(width: 125, child: Text("STATUS", style: headerStyle)),
           SizedBox(
-            width: 175,
+            width: 200,
             child: Row(
               children: [
                 Text("RUN AT", style: headerStyle),
@@ -319,7 +319,7 @@ class _RunsPageState extends State<RunsPage> {
             ),
           ),
           SizedBox(
-            width: 175,
+            width: 200,
             child: Row(
               children: [
                 Text("UPDATED AT", style: headerStyle),
@@ -349,7 +349,7 @@ class _RunsPageState extends State<RunsPage> {
       child: Row(
         children: [
           SizedBox(
-            width: 280,
+            width: 300,
             child: SelectableText(
               run.id,
               style: const TextStyle(fontWeight: FontWeight.w600),
@@ -370,7 +370,7 @@ class _RunsPageState extends State<RunsPage> {
             ),
           ),
           SizedBox(
-            width: 175,
+            width: 200,
             child: Text(
               run.createdAt.toString().split('.')[0],
               style: TextStyle(
@@ -382,7 +382,7 @@ class _RunsPageState extends State<RunsPage> {
             ),
           ),
           SizedBox(
-            width: 175,
+            width: 200,
             child: Text(
               run.updatedAt.toString().split('.')[0],
               style: TextStyle(
