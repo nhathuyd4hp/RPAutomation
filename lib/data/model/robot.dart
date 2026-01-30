@@ -73,6 +73,6 @@ class Robot {
       final responseJson = jsonDecode(response.body);
       parameter.setAnnotation(responseJson['data']!);
     }
-    return this;
+    return await reGenerate();
   }
 }
