@@ -1,5 +1,6 @@
 import "package:fluent_ui/fluent_ui.dart";
 import "package:lottie/lottie.dart";
+import 'package:intl/intl.dart';
 import "package:provider/provider.dart";
 import "package:task_distribution/data/model/schedule.dart";
 import "package:task_distribution/providers/schedule/schedule.dart";
@@ -187,15 +188,23 @@ class _SchedulePageState extends State<SchedulePage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          Expanded(flex: 3, child: Text("ROBOT", style: headerStyle)),
-          Expanded(flex: 1, child: Text("STATUS", style: headerStyle)),
-          Expanded(flex: 2, child: Text("NEXT RUN", style: headerStyle)),
-          Expanded(flex: 2, child: Text("START DATE", style: headerStyle)),
-          Expanded(flex: 2, child: Text("END DATE", style: headerStyle)),
-          Expanded(flex: 1, child: Text("DELETE", style: headerStyle)),
+          Expanded(child: Text("ROBOT", style: headerStyle)),
+          SizedBox(width: 200, child: Text("NEXT RUN", style: headerStyle)),
+          SizedBox(width: 200, child: Text("START DATE", style: headerStyle)),
+          SizedBox(width: 225, child: Text("DAY OF WEEK", style: headerStyle)),
+          SizedBox(width: 50, child: Text("DELETE", style: headerStyle)),
         ],
       ),
     );
+  }
+
+  String displayNextRun(DateTime date) {
+    final dateTime = DateFormat('yyyy-MM-dd HH:mm:ss').format(date);
+    final weekday = DateFormat('EEE', 'en_US').format(date).toUpperCase();
+
+    final dayLabel = weekday == 'SUN' ? '[SU]' : '[${date.weekday + 1}]';
+
+    return '$dateTime $dayLabel';
   }
 
   Widget _buildTableRow(
@@ -203,10 +212,7 @@ class _SchedulePageState extends State<SchedulePage> {
     Schedule schedule,
     FluentThemeData theme,
   ) {
-    // Format thời gian chạy kế tiếp
-    final nextRun = schedule.nextRunTime != null
-        ? schedule.nextRunTime.toString().split('.')[0]
-        : "";
+    final nextRun = displayNextRun(schedule.nextRunTime);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -214,15 +220,13 @@ class _SchedulePageState extends State<SchedulePage> {
         children: [
           // 1. Tên Robot
           Expanded(
-            flex: 3,
             child: Text(
               schedule.name,
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
-          Expanded(flex: 1, child: _buildStatusBadge(schedule)),
-          Expanded(
-            flex: 2,
+          SizedBox(
+            width: 200,
             child: Text(
               nextRun,
               style: TextStyle(
@@ -233,8 +237,8 @@ class _SchedulePageState extends State<SchedulePage> {
               ),
             ),
           ),
-          Expanded(
-            flex: 2,
+          SizedBox(
+            width: 200,
             child: Text(
               schedule.startDate.toString().split('.')[0],
               style: TextStyle(
@@ -245,10 +249,10 @@ class _SchedulePageState extends State<SchedulePage> {
               ),
             ),
           ),
-          Expanded(
-            flex: 2,
+          SizedBox(
+            width: 225,
             child: Text(
-              schedule.endDate.toString().split('.')[0],
+              schedule.dayOfWeek,
               style: TextStyle(
                 fontFamily: 'Consolas',
                 fontWeight: FontWeight.bold,
@@ -257,60 +261,14 @@ class _SchedulePageState extends State<SchedulePage> {
               ),
             ),
           ),
-          Expanded(
-            flex: 1,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: IconButton(
-                icon: const Icon(FluentIcons.delete, color: Color(0xffef314c)),
-                onPressed: () => _handleDelete(context, schedule),
-              ),
+          SizedBox(
+            width: 50,
+            child: IconButton(
+              icon: const Icon(FluentIcons.delete, color: Color(0xffef314c)),
+              onPressed: () => _handleDelete(context, schedule),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildStatusBadge(Schedule schedule) {
-    Color bgColor;
-    Color textColor;
-    IconData icon;
-
-    if (schedule.nextRunTime != null) {
-      bgColor = const Color(0xFFE8F5E9);
-      textColor = const Color(0xFF2E7D32);
-      icon = FluentIcons.clock;
-    } else {
-      bgColor = const Color(0xFFF5F5F5);
-      textColor = const Color(0xFF616161);
-      icon = FluentIcons.history;
-    }
-
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: textColor.withValues(alpha: 0.2)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 12, color: textColor),
-            const SizedBox(width: 6),
-            Text(
-              schedule.nextRunTime != null ? "Active" : "Expired",
-              style: TextStyle(
-                color: textColor,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

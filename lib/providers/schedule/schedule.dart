@@ -32,8 +32,10 @@ class ScheduleProvider extends ChangeNotifier {
   }
 
   Future<void> setSchedule(Robot robot, Map<String, String> schedule) async {
-    if (schedule['day_of_week'] == null || schedule['day_of_week'] == "") {
-      return server.info("${robot.name}: cần chọn ít nhất 1 ngày chạy.");
+    if (schedule['day_of_week'] == null ||
+        schedule['day_of_week'] == "" ||
+        schedule['day_of_month'] == "") {
+      return server.error("${robot.name}: cần chọn ít nhất 1 ngày chạy");
     }
     final Schedule? record = await repository.setSchedule(robot, schedule);
     if (record == null) {
