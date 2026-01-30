@@ -49,13 +49,15 @@ class Robot {
 
   Future<Robot> reGenerate() async {
     bool hasAPI = parameters.any(
-      (param) => param.annotation.toLowerCase().contains("type.api"),
+      (param) => param.annotation.toLowerCase().contains("src.core.type.api"),
     );
     if (!hasAPI) return this;
 
     for (int i = 0; i < parameters.length; i++) {
       Parameter parameter = parameters[i];
-      if (!parameter.annotation.toLowerCase().contains("type.api")) continue;
+      if (!parameter.annotation.toLowerCase().contains("src.core.type.api")) {
+        continue;
+      }
       if (parameter.defaultValue == null) {
         throw Exception(
           "Cannot build form: parameter '${parameter.name}' does not have a default value.",

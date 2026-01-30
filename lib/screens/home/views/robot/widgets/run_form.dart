@@ -41,10 +41,37 @@ class _RunFormState extends State<RunForm> {
         return int.tryParse(clean) ?? clean;
       }).toList();
 
+      if (items.length == 1) {
+        final singleValue = items.first;
+        if (_controllers[parameter.name] != singleValue) {
+          Future.microtask(() {
+            if (mounted) {
+              setState(() {
+                _controllers[parameter.name] = singleValue;
+              });
+            }
+          });
+        }
+        return TextBox(
+          controller: TextEditingController(
+            text: singleValue.toString().replaceAll(r'\u3000', ' '),
+          ),
+          readOnly: true,
+          enabled: false,
+          prefix: const Padding(
+            padding: EdgeInsets.only(left: 8.0),
+            child: Icon(FluentIcons.lock, size: 10),
+          ),
+        );
+      }
+
       return ComboBox<dynamic>(
         value: _controllers[parameter.name],
         items: items.map<ComboBoxItem<dynamic>>((e) {
-          return ComboBoxItem<dynamic>(value: e, child: Text(e.toString()));
+          return ComboBoxItem<dynamic>(
+            value: e,
+            child: Text(e.toString().replaceAll(r'\u3000', ' ')),
+          );
         }).toList(),
         onChanged: (value) {
           setState(() {
@@ -303,7 +330,7 @@ class _RunFormState extends State<RunForm> {
                           key,
                           value,
                         ) {
-                          return MapEntry(key, value.text);
+                          return MapEntry(key, value.toString());
                         });
 
                         Navigator.pop(widget.dialogContext, {
