@@ -7,6 +7,7 @@ class Run {
   final String? parameters;
   final String? result;
   final DateTime createdAt;
+  final DateTime? runAt;
   final DateTime? updatedAt;
 
   Run({
@@ -16,6 +17,7 @@ class Run {
     this.parameters,
     this.result,
     required this.createdAt,
+    this.runAt,
     this.updatedAt,
   });
 
@@ -27,19 +29,12 @@ class Run {
       parameters: json['parameters'] as String?,
       result: json['result'] as String?,
       createdAt: DateTime.parse(json['created_at']).toLocal(),
+      runAt: json['run_at'] != null
+          ? DateTime.parse(json['run_at']).toLocal()
+          : null,
       updatedAt: json['updated_at'] != null
           ? DateTime.parse(json['updated_at']).toLocal()
           : null,
     );
-  }
-
-  Color getColor() {
-    if (status == "FAILURE") {
-      return Color(0xfffeebeb);
-    }
-    if (status == "PENDING") {
-      return Color(0xffecfaf4);
-    }
-    return Color(0xffeff7ff);
   }
 }

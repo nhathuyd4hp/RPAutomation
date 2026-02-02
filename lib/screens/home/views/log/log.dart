@@ -301,7 +301,7 @@ class _ExecutionLogPageState extends State<ExecutionLogPage> {
               _buildInfoItem("Robot", run.robot, FluentIcons.robot),
               _buildInfoItem(
                 "Run At",
-                run.createdAt.toString().split('.')[0],
+                run.runAt != null ? run.runAt.toString().split('.')[0] : " ",
                 FluentIcons.clock,
               ),
               _buildInfoItem(

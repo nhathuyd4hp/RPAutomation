@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:file_picker/file_picker.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:http/http.dart' as http;
@@ -19,6 +20,9 @@ class _RunFormState extends State<RunForm> {
   final Map<String, dynamic> _controllers = {};
   final Map<String, bool> _idLoading = {};
   late Future<Robot> _robotFuture;
+  bool runInFuture = false;
+  DateTime? runOn;
+  DateTime? runAt;
 
   Widget _buildInput(Parameter parameter) {
     if (parameter.annotation.toLowerCase().contains("datetime.datetime")) {
@@ -219,20 +223,24 @@ class _RunFormState extends State<RunForm> {
       return SizedBox(width: 0, height: 0);
     }
     return Column(
-      spacing: 25,
-      mainAxisAlignment: MainAxisAlignment.center,
+      spacing: 12,
+      mainAxisAlignment: MainAxisAlignment.start,
       children: robot.parameters.map<Widget>((param) {
         return Row(
           spacing: 0,
           children: [
-            Expanded(
-              flex: 1,
-              child: Text(
-                param.name.toUpperCase().replaceAll('_', " "),
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
+            InfoLabel(
+              label: param.name
+                  .split('_')
+                  .map(
+                    (e) => e.isNotEmpty
+                        ? '${e[0].toUpperCase()}${e.substring(1).toLowerCase()}'
+                        : '',
+                  )
+                  .join(' '),
+              labelStyle: TextStyle(fontWeight: FontWeight.w500),
+              child: _buildInput(param),
             ),
-            Expanded(flex: 3, child: _buildInput(param)),
           ],
         );
       }).toList(),
@@ -300,17 +308,121 @@ class _RunFormState extends State<RunForm> {
 
         return ContentDialog(
           constraints: BoxConstraints(
-            maxWidth: 600,
-            maxHeight: 200 + (robot.parameters.length * 50),
+            maxWidth: runInFuture ? 800 : 550,
+            maxHeight: runInFuture
+                ? max(400, 200 + (robot.parameters.length * 50))
+                : 275 + (robot.parameters.length * 50),
           ),
-          title: Text(robot.name),
+          title: Column(
+            spacing: 15,
+            children: [
+              Row(
+                children: [
+                  Text(robot.name),
+                  Spacer(),
+                  ToggleSwitch(
+                    checked: runInFuture,
+                    onChanged: (value) {
+                      setState(() {
+                        runInFuture = value;
+                        if (value) {
+                          runOn = DateTime.now();
+                          runAt = DateTime.now();
+                        } else {
+                          runOn = null;
+                          runAt = null;
+                        }
+                      });
+                    },
+                  ),
+                ],
+              ),
+              Divider(
+                size: double.infinity,
+                style: DividerThemeData(
+                  thickness: 0.5,
+                  decoration: BoxDecoration(
+                    color: FluentTheme.of(context).accentColor,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+            ],
+          ),
           content: () {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: ProgressBar());
             } else if (hasError) {
               return Text("${snapshot.error}");
             } else if (hasData) {
-              return _buildForm(snapshot.data!);
+              return Row(
+                spacing: 25,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Input Parameter",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        _buildForm(snapshot.data!),
+                      ],
+                    ),
+                  ),
+                  if (runInFuture) ...[
+                    Divider(
+                      direction: Axis.vertical,
+                      style: DividerThemeData(
+                        thickness: 1,
+                        decoration: BoxDecoration(
+                          color: Colors.grey,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Estimated Time",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          InfoLabel(
+                            label: "Run on",
+                            labelStyle: TextStyle(fontWeight: FontWeight.w500),
+                            child: DatePicker(
+                              selected: runOn,
+                              onChanged: (date) => setState(() => runOn = date),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          InfoLabel(
+                            label: "Run at",
+                            labelStyle: TextStyle(fontWeight: FontWeight.w500),
+                            child: TimePicker(
+                              selected: runAt,
+                              hourFormat: HourFormat.HH,
+                              onChanged: (time) => setState(() => runAt = time),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              );
             }
             return const SizedBox.shrink();
           }(),
@@ -330,16 +442,35 @@ class _RunFormState extends State<RunForm> {
                           key,
                           value,
                         ) {
-                          return MapEntry(key, value.toString());
+                          if (value is DateTime) {
+                            return MapEntry(
+                              key,
+                              value.toUtc().toIso8601String(),
+                            );
+                          }
+                          return MapEntry(key, value?.toString() ?? "");
                         });
-
+                        final DateTime? eta =
+                            (runInFuture && runOn != null && runAt != null)
+                            ? DateTime(
+                                runOn!.toUtc().year,
+                                runOn!.toUtc().month,
+                                runOn!.toUtc().day,
+                                runAt!.toUtc().hour,
+                                runAt!.toUtc().minute,
+                                runAt!.toUtc().second,
+                              )
+                            : null;
                         Navigator.pop(widget.dialogContext, {
                           "name": robot.name,
                           "parameters": data,
+                          "eta": eta?.toUtc().toIso8601String(),
                         });
                       },
                 child: _idLoading.values.any((e) => e)
                     ? const Text('Waiting...')
+                    : runInFuture
+                    ? const Text('Confirm')
                     : const Text('Run'),
               ),
           ],
