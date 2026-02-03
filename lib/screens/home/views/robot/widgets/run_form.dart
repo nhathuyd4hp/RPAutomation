@@ -315,7 +315,10 @@ class _RunFormState extends State<RunForm> {
                   Expanded(
                     child: Text(
                       robot.name,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 22.5,
+                        fontWeight: FontWeight.bold,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
