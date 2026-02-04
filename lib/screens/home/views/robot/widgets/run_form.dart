@@ -51,7 +51,7 @@ class _RunFormState extends State<RunForm> {
       );
       if (items.length == 1) {
         final singleValue = items.first;
-        if (_controllers[parameter.name] != singleValue) {
+        if (_controllers[parameter.name] != singleValue && !isAsset) {
           Future.microtask(() {
             if (mounted) {
               setState(() {
@@ -64,159 +64,178 @@ class _RunFormState extends State<RunForm> {
           spacing: 8,
           children: [
             if (isAsset) ...[
-              IconButton(
-                icon: Icon(FluentIcons.delete, color: Colors.red),
-                onPressed: () async {
-                  if (parameter.defaultValue == null ||
-                      !RegExp(
-                        r'^/api/type/objects\?bucket=[^&]+&objectName=.+$',
-                      ).hasMatch(parameter.defaultValue)) {
-                    return;
-                  }
-                  final Uri uri = Uri.parse(parameter.defaultValue!);
-                  final String bucket = uri.queryParameters['bucket'] ?? "";
-                  final String objectName =
-                      uri.queryParameters['objectName'] ?? "";
-                  final String deleteUrl =
-                      "${RobotAutomation.backendUrl}/api/assets/${bucket.toLowerCase()}?objectName=$objectName";
-                  try {
-                    final response = await http.delete(Uri.parse(deleteUrl));
-                    setState(() {
-                      _idLoading[parameter.name] = true;
-                    });
-                    if (response.statusCode == 200) {
-                      setState(() {
-                        _controllers[parameter.name] = null;
-                      });
-                    }
-                  } catch (e) {
-                    //
-                  } finally {
-                    setState(() {
-                      _idLoading[parameter.name] = false;
-                    });
-                  }
-                },
-              ),
-            ],
-            if (isAsset) ...[
-              Expanded(
-                child: FilledButton(
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+              (() {
+                final bool hasFile =
+                    _controllers[parameter.name] != null &&
+                    _controllers[parameter.name].toString().isNotEmpty;
+                return Expanded(
+                  child: Row(
+                    spacing: 8,
                     children: [
-                      Icon(FluentIcons.view, size: 16),
-                      SizedBox(width: 8),
-                      Text("View File"),
+                      if (hasFile) ...[
+                        IconButton(
+                          icon: Icon(FluentIcons.delete, color: Colors.red),
+                          onPressed: () async {
+                            if (parameter.defaultValue == null) return;
+                            final Uri uri = Uri.parse(parameter.defaultValue!);
+                            final String bucket =
+                                uri.queryParameters['bucket'] ?? "";
+                            final String objectName =
+                                uri.queryParameters['objectName'] ?? "";
+                            final String deleteUrl =
+                                "${RobotAutomation.backendUrl}/api/assets/${bucket.toLowerCase()}?objectName=$objectName";
+                            try {
+                              setState(() => _idLoading[parameter.name] = true);
+                              final response = await http.delete(
+                                Uri.parse(deleteUrl),
+                              );
+                              if (response.statusCode == 200) {
+                                setState(() {
+                                  _controllers[parameter.name] = null;
+                                });
+                              }
+                            } finally {
+                              setState(
+                                () => _idLoading[parameter.name] = false,
+                              );
+                            }
+                          },
+                        ),
+                        // NÚT VIEW FILE
+                        Expanded(
+                          child: TextBox(
+                            placeholder: _controllers[parameter.name]
+                                .toString()
+                                .split("=")
+                                .last,
+                            readOnly: true,
+                            enabled: true,
+                            prefix: Padding(
+                              padding: EdgeInsets.only(left: 8.0),
+                              child: Icon(FluentIcons.info, size: 14),
+                            ),
+                          ),
+                        ),
+                        FilledButton(
+                          onPressed: () async {
+                            if (parameter.defaultValue == null) return;
+                            final Uri uri = Uri.parse(parameter.defaultValue!);
+                            final String bucket =
+                                uri.queryParameters['bucket'] ?? "";
+                            final String objectName =
+                                uri.queryParameters['objectName'] ?? "";
+                            final String previewURL =
+                                "${RobotAutomation.backendUrl}/api/assets/$bucket?objectName=$objectName&preview=True";
+                            await launchUrl(Uri.parse(previewURL));
+                          },
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(FluentIcons.view, size: 16),
+                              SizedBox(width: 8),
+                              Text("View File"),
+                            ],
+                          ),
+                        ),
+                      ] else ...[
+                        const Expanded(
+                          child: TextBox(
+                            placeholder: 'No asset uploaded',
+                            readOnly: true,
+                            enabled: false,
+                            prefix: Padding(
+                              padding: EdgeInsets.only(left: 8.0),
+                              child: Icon(FluentIcons.info, size: 14),
+                            ),
+                          ),
+                        ),
+                      ],
+
+                      // NÚT UPLOAD (Nằm cuối Row)
+                      FilledButton(
+                        onPressed: _idLoading[parameter.name] == true
+                            ? null
+                            : () async {
+                                if (parameter.defaultValue == null) return;
+                                final Uri uri = Uri.parse(
+                                  parameter.defaultValue!,
+                                );
+                                final String bucket =
+                                    uri.queryParameters['bucket'] ?? "";
+                                final String objectName =
+                                    uri.queryParameters['objectName'] ?? "";
+                                final String extension = p
+                                    .extension(objectName)
+                                    .replaceFirst('.', '');
+
+                                FilePickerResult? result = await FilePicker
+                                    .platform
+                                    .pickFiles(
+                                      type: FileType.custom,
+                                      allowedExtensions: [extension],
+                                    );
+
+                                if (result == null) return;
+                                setState(
+                                  () => _idLoading[parameter.name] = true,
+                                );
+
+                                try {
+                                  final String filePath =
+                                      result.files.single.path!;
+                                  final uploadUri =
+                                      Uri.parse(
+                                        "${RobotAutomation.backendUrl}/api/assets",
+                                      ).replace(
+                                        queryParameters: {
+                                          'bucket': bucket,
+                                          'objectName': objectName,
+                                        },
+                                      );
+
+                                  var request = http.MultipartRequest(
+                                    'POST',
+                                    uploadUri,
+                                  );
+                                  request.files.add(
+                                    await http.MultipartFile.fromPath(
+                                      'file',
+                                      filePath,
+                                    ),
+                                  );
+                                  var response = await http.Response.fromStream(
+                                    await request.send(),
+                                  );
+
+                                  if (response.statusCode == 200) {
+                                    final apiResponse =
+                                        APIResponse<String>.fromJson(
+                                          jsonDecode(response.body),
+                                          (data) => data.toString(),
+                                        );
+                                    setState(() {
+                                      _controllers[parameter.name] = apiResponse
+                                          .data; // Cập nhật state để Row rebuild
+                                    });
+                                  }
+                                } finally {
+                                  setState(
+                                    () => _idLoading[parameter.name] = false,
+                                  );
+                                }
+                              },
+                        child: _idLoading[parameter.name] == true
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: ProgressRing(strokeWidth: 2.5),
+                              )
+                            : const Icon(FluentIcons.file_request, size: 18),
+                      ),
                     ],
                   ),
-                  onPressed: () async {
-                    if (parameter.defaultValue == null ||
-                        !RegExp(
-                          r'^/api/type/objects\?bucket=[^&]+&objectName=.+$',
-                        ).hasMatch(parameter.defaultValue)) {
-                      return;
-                    }
-                    final Uri uri = Uri.parse(parameter.defaultValue!);
-                    final String bucket = uri.queryParameters['bucket'] ?? "";
-                    final String objectName =
-                        uri.queryParameters['objectName'] ?? "";
-                    final String previewURL =
-                        "${RobotAutomation.backendUrl}/api/assets/$bucket?objectName=$objectName&preview=True";
-                    await launchUrl(Uri.parse(previewURL));
-                  },
-                ),
-              ),
-              FilledButton(
-                onPressed: () async {
-                  // ----- //
-                  if (parameter.defaultValue == null ||
-                      !RegExp(
-                        r'^/api/type/objects\?bucket=[^&]+&objectName=.+$',
-                      ).hasMatch(parameter.defaultValue)) {
-                    return;
-                  }
-                  final Uri uri = Uri.parse(parameter.defaultValue!);
-                  final String bucket = uri.queryParameters['bucket'] ?? "";
-                  final String objectName =
-                      uri.queryParameters['objectName'] ?? "";
-                  final String extension = p
-                      .extension(objectName)
-                      .replaceFirst('.', '');
-                  // ----- //
-                  FilePickerResult? result = await FilePicker.platform
-                      .pickFiles(
-                        dialogTitle: "Select a file",
-                        lockParentWindow: true,
-                        allowMultiple: false,
-                        type: FileType.custom,
-                        allowedExtensions: [extension],
-                      );
-                  // ----- //
-                  if (result == null) return;
-                  if (context.mounted) {
-                    setState(() {
-                      _idLoading[parameter.name] = true;
-                    });
-                  }
-                  // Upload
-                  try {
-                    final String filePath = result.files.single.path!;
-                    final uri =
-                        Uri.parse(
-                          "${RobotAutomation.backendUrl}/api/assets",
-                        ).replace(
-                          queryParameters: {
-                            'bucket': bucket,
-                            'objectName': objectName,
-                          },
-                        );
-                    var request = http.MultipartRequest('POST', uri);
-                    request.files.add(
-                      await http.MultipartFile.fromPath('file', filePath),
-                    );
-                    var streamedResponse = await request.send();
-                    var response = await http.Response.fromStream(
-                      streamedResponse,
-                    );
-                    if (response.statusCode != 200) {
-                      if (context.mounted) {
-                        setState(() {
-                          _controllers[parameter.name] = null;
-                          _idLoading[parameter.name] = false;
-                        });
-                      }
-                      return;
-                    }
-                    final Map<String, dynamic> responseJSON = jsonDecode(
-                      response.body,
-                    );
-                    final apiResponse = APIResponse<String>.fromJson(
-                      responseJSON,
-                      (data) => data.toString(),
-                    );
-                    if (context.mounted) {
-                      setState(() {
-                        _controllers[parameter.name] = apiResponse.data;
-                        _idLoading[parameter.name] = false;
-                      });
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      setState(() {
-                        _idLoading[parameter.name] = false;
-                      });
-                    }
-                  }
-                },
-                child: _idLoading[parameter.name] == true
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: ProgressRing(strokeWidth: 2.5),
-                      )
-                    : const Icon(FluentIcons.file_request, size: 18),
-              ),
+                );
+              }()), // Sử dụng Immediately Invoked Function Expression (IIFE) để xử lý logic nội bộ
             ],
           ],
         );
