@@ -1,3 +1,4 @@
+import 'package:path/path.dart' as p;
 import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'package:fluent_ui/fluent_ui.dart';
@@ -5,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:task_distribution/main.dart';
 import 'package:task_distribution/data/model/api_response.dart';
 import 'package:task_distribution/data/model/robot.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class RunForm extends StatefulWidget {
   final BuildContext dialogContext;
@@ -44,7 +46,9 @@ class _RunFormState extends State<RunForm> {
         String clean = e.trim().replaceAll("'", "").replaceAll('"', "");
         return int.tryParse(clean) ?? clean;
       }).toList();
-
+      final bool isAsset = parameter.annotation.toLowerCase().contains(
+        "src.core.type.asset",
+      );
       if (items.length == 1) {
         final singleValue = items.first;
         if (_controllers[parameter.name] != singleValue) {
@@ -56,16 +60,139 @@ class _RunFormState extends State<RunForm> {
             }
           });
         }
-        return TextBox(
-          controller: TextEditingController(
-            text: singleValue.toString().replaceAll(r'\u3000', ' '),
-          ),
-          readOnly: true,
-          enabled: false,
-          prefix: const Padding(
-            padding: EdgeInsets.only(left: 8.0),
-            child: Icon(FluentIcons.lock, size: 10),
-          ),
+        return Row(
+          spacing: 8,
+          children: [
+            if (isAsset) ...[
+              IconButton(
+                icon: Icon(FluentIcons.delete, color: Colors.red),
+                onPressed: () {},
+              ),
+            ],
+            Expanded(
+              child: TextBox(
+                controller: TextEditingController(
+                  text: singleValue.toString().replaceAll(r'\u3000', ' '),
+                ),
+                readOnly: true,
+                enabled: false,
+                prefix: const Padding(
+                  padding: EdgeInsets.only(left: 8.0),
+                  child: Icon(FluentIcons.lock, size: 10),
+                ),
+              ),
+            ),
+            if (isAsset) ...[
+              FilledButton(
+                child: Text("Preview"),
+                onPressed: () async {
+                  if (parameter.defaultValue == null ||
+                      !RegExp(
+                        r'^/api/type/objects\?bucket=[^&]+&objectName=.+$',
+                      ).hasMatch(parameter.defaultValue)) {
+                    return;
+                  }
+                  final Uri uri = Uri.parse(parameter.defaultValue!);
+                  final String bucket = uri.queryParameters['bucket'] ?? "";
+                  final String objectName =
+                      uri.queryParameters['objectName'] ?? "";
+                  final String previewURL =
+                      "${RobotAutomation.backendUrl}/api/assets/$bucket?objectName=$objectName&preview=True";
+                  await launchUrl(Uri.parse(previewURL));
+                },
+              ),
+              FilledButton(
+                onPressed: () async {
+                  // ----- //
+                  if (parameter.defaultValue == null ||
+                      !RegExp(
+                        r'^/api/type/objects\?bucket=[^&]+&objectName=.+$',
+                      ).hasMatch(parameter.defaultValue)) {
+                    return;
+                  }
+                  final Uri uri = Uri.parse(parameter.defaultValue!);
+                  final String bucket = uri.queryParameters['bucket'] ?? "";
+                  final String objectName =
+                      uri.queryParameters['objectName'] ?? "";
+                  final String extension = p
+                      .extension(objectName)
+                      .replaceFirst('.', '');
+                  // ----- //
+                  FilePickerResult? result = await FilePicker.platform
+                      .pickFiles(
+                        dialogTitle: "Select a file",
+                        lockParentWindow: true,
+                        allowMultiple: false,
+                        type: FileType.custom,
+                        allowedExtensions: [extension],
+                      );
+                  // ----- //
+                  if (result == null) return;
+                  if (context.mounted) {
+                    setState(() {
+                      _idLoading[parameter.name] = true;
+                    });
+                  }
+                  // Upload
+                  try {
+                    final String filePath = result.files.single.path!;
+                    final uri =
+                        Uri.parse(
+                          "${RobotAutomation.backendUrl}/api/assets",
+                        ).replace(
+                          queryParameters: {
+                            'bucket': bucket,
+                            'objectName': objectName,
+                          },
+                        );
+                    var request = http.MultipartRequest('POST', uri);
+                    request.files.add(
+                      await http.MultipartFile.fromPath('file', filePath),
+                    );
+                    var streamedResponse = await request.send();
+                    var response = await http.Response.fromStream(
+                      streamedResponse,
+                    );
+                    if (response.statusCode != 200) {
+                      if (context.mounted) {
+                        setState(() {
+                          _controllers[parameter.name] = null;
+                          _idLoading[parameter.name] = false;
+                        });
+                      }
+                      return;
+                    }
+                    final Map<String, dynamic> responseJSON = jsonDecode(
+                      response.body,
+                    );
+                    final apiResponse = APIResponse<String>.fromJson(
+                      responseJSON,
+                      (data) => data.toString(),
+                    );
+                    if (context.mounted) {
+                      setState(() {
+                        _controllers[parameter.name] = apiResponse.data;
+                        _idLoading[parameter.name] = false;
+                      });
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      setState(() {
+                        _idLoading[parameter.name] = false;
+                      });
+                    }
+                  }
+                },
+                child: _idLoading[parameter.name] == true
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: ProgressRing(strokeWidth: 2.5),
+                      )
+                    : const Icon(FluentIcons.file_request, size: 18),
+              ),
+            ],
+          ],
         );
       }
 
@@ -98,16 +225,54 @@ class _RunFormState extends State<RunForm> {
       );
     }
     if (parameter.annotation.toLowerCase().contains("_io.bytesio")) {
-      final String currentPath = _controllers[parameter.name]?.toString() ?? "";
+      final String? currentVal = _controllers[parameter.name]?.toString();
+      final bool hasFile = currentVal != null && currentVal.isNotEmpty;
       return Row(
         spacing: 8,
         children: [
           Expanded(
-            child: TextBox(
-              placeholder: 'No file selected',
-              readOnly: true,
-              controller: TextEditingController(text: currentPath),
-            ),
+            child: hasFile
+                ? Row(
+                    spacing: 4,
+                    children: [
+                      IconButton(
+                        icon: Icon(FluentIcons.delete, color: Colors.red),
+                        onPressed: () {
+                          setState(() {
+                            _controllers[parameter.name] = null;
+                          });
+                        },
+                      ),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: () async {
+                            if (context.mounted) {
+                              final String previewURL =
+                                  "${RobotAutomation.backendUrl}/api/assets/$currentVal&preview=True";
+                              await launchUrl(Uri.parse(previewURL));
+                            }
+                          },
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(FluentIcons.view, size: 16),
+                              SizedBox(width: 8),
+                              Text("View File"),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : const TextBox(
+                    placeholder: 'No file selected',
+                    readOnly: true,
+                    enabled: false,
+                    prefix: Padding(
+                      padding: EdgeInsets.only(left: 8.0),
+                      child: Icon(FluentIcons.info, size: 14),
+                    ),
+                  ),
           ),
           FilledButton(
             onPressed: _idLoading[parameter.name] == true
@@ -170,7 +335,7 @@ class _RunFormState extends State<RunForm> {
                     height: 19,
                     child: const ProgressRing(strokeWidth: 2.5),
                   )
-                : Icon(FluentIcons.file_request),
+                : Icon(FluentIcons.file_request, size: 18),
           ),
         ],
       );
