@@ -138,11 +138,12 @@ class _RunFormState extends State<RunForm> {
                           ),
                         ),
                       ] else ...[
-                        const Expanded(
+                        Expanded(
                           child: TextBox(
-                            placeholder: 'No asset uploaded',
+                            placeholder: 'File Not Found: ${parameter.name}',
+                            placeholderStyle: TextStyle(color: Colors.red),
                             readOnly: true,
-                            enabled: false,
+                            enabled: true,
                             prefix: Padding(
                               padding: EdgeInsets.only(left: 8.0),
                               child: Icon(FluentIcons.info, size: 14),
