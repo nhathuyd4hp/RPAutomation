@@ -1,4 +1,3 @@
-import 'package:path/path.dart' as p;
 import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'package:fluent_ui/fluent_ui.dart';
@@ -65,17 +64,9 @@ class _RunFormState extends State<RunForm> {
           children: [
             if (isAsset) ...[
               (() {
-                final bool hasFile =
-                    _controllers[parameter.name].toString().toLowerCase() ==
-                    parameter.defaultValue
-                        .toString()
-                        .toLowerCase()
-                        .split("?")
-                        .last
-                        .replaceAll("bucket=", "")
-                        .toString()
-                        .replaceAll("&", "?");
-
+                final bool hasFile = RegExp(
+                  r'^([a-zA-Z0-9._-]+)\?objectName=.+$',
+                ).hasMatch(_controllers[parameter.name].toString());
                 return Expanded(
                   child: Row(
                     spacing: 8,
@@ -84,10 +75,13 @@ class _RunFormState extends State<RunForm> {
                         IconButton(
                           icon: Icon(FluentIcons.delete, color: Colors.red),
                           onPressed: () async {
-                            if (parameter.defaultValue == null) return;
+                            if (_controllers[parameter.name] == null) return;
                             final Uri uri = Uri.parse(parameter.defaultValue!);
                             final String bucket =
-                                uri.queryParameters['bucket'] ?? "";
+                                uri.queryParameters['bucket']?.isNotEmpty ==
+                                    true
+                                ? uri.queryParameters['bucket']!
+                                : uri.path;
                             final String objectName =
                                 uri.queryParameters['objectName'] ?? "";
                             final String deleteUrl =
@@ -116,22 +110,22 @@ class _RunFormState extends State<RunForm> {
                                 .toString()
                                 .split("=")
                                 .last,
+                            placeholderStyle: TextStyle(
+                              fontWeight: FontWeight.w600,
+                            ),
                             readOnly: true,
                             enabled: true,
-                            prefix: Padding(
-                              padding: EdgeInsets.only(left: 8.0),
-                              child: Icon(FluentIcons.info, size: 14),
-                            ),
                           ),
                         ),
                         FilledButton(
                           onPressed: () async {
-                            if (parameter.defaultValue == null) return;
-                            final Uri uri = Uri.parse(parameter.defaultValue!);
-                            final String bucket =
-                                uri.queryParameters['bucket'] ?? "";
-                            final String objectName =
-                                uri.queryParameters['objectName'] ?? "";
+                            if (_controllers[parameter.name] == null) return;
+                            final Uri uri = Uri.parse(
+                              _controllers[parameter.name],
+                            );
+                            final String bucket = uri.path;
+                            final String? objectName =
+                                uri.queryParameters['objectName'];
                             final String previewURL =
                                 "${RobotAutomation.backendUrl}/api/assets/$bucket?objectName=$objectName&preview=True";
                             await launchUrl(Uri.parse(previewURL));
@@ -149,13 +143,12 @@ class _RunFormState extends State<RunForm> {
                         Expanded(
                           child: TextBox(
                             placeholder: 'File Not Found',
-                            placeholderStyle: TextStyle(color: Colors.red),
+                            placeholderStyle: TextStyle(
+                              color: Colors.red,
+                              fontWeight: FontWeight.w600,
+                            ),
                             readOnly: true,
                             enabled: true,
-                            prefix: Padding(
-                              padding: EdgeInsets.only(left: 8.0),
-                              child: Icon(FluentIcons.info, size: 14),
-                            ),
                           ),
                         ),
                       ],
@@ -165,18 +158,19 @@ class _RunFormState extends State<RunForm> {
                         onPressed: _idLoading[parameter.name] == true
                             ? null
                             : () async {
-                                if (parameter.defaultValue == null) return;
-                                final Uri uri = Uri.parse(
-                                  parameter.defaultValue!,
-                                );
+                                final uri = Uri.parse(parameter.defaultValue);
                                 final String bucket =
-                                    uri.queryParameters['bucket'] ?? "";
-                                final String objectName =
-                                    uri.queryParameters['objectName'] ?? "";
-                                final String extension = p
-                                    .extension(objectName)
-                                    .replaceFirst('.', '');
+                                    uri.queryParameters['bucket']?.isNotEmpty ==
+                                        true
+                                    ? uri.queryParameters['bucket']!
+                                    : uri.path;
 
+                                final String? objectName =
+                                    uri.queryParameters['objectName'];
+                                if (objectName == null) {
+                                  return;
+                                }
+                                String extension = objectName.split('.').last;
                                 FilePickerResult? result = await FilePicker
                                     .platform
                                     .pickFiles(

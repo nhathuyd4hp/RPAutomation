@@ -80,18 +80,36 @@ class Robot {
       final responseJson = jsonDecode(response.body);
       // Set Annotation
       parameter.setAnnotation(responseJson['data']!);
-      // Set Default Value
-      // ----- 1. Typing.Literal
-      final content = parameter.annotation.substring(
-        parameter.annotation.indexOf('[') + 1,
-        parameter.annotation.lastIndexOf(']'),
-      );
-      final List<dynamic> items = content.split(',').map((e) {
-        String clean = e.trim().replaceAll("'", "").replaceAll('"', "");
-        return int.tryParse(clean) ?? clean;
-      }).toList();
-      if (items.isNotEmpty && items.first != "") {
-        parameter.setDefaultValue(items[0]);
+      // Set Default Value for Asset
+      if (parameter.annotation.toLowerCase().contains("src.core.type.asset")) {
+        final content = parameter.annotation.substring(
+          parameter.annotation.indexOf('[') + 1,
+          parameter.annotation.lastIndexOf(']'),
+        );
+        final List<dynamic> items = content.split(',').map((e) {
+          String clean = e.trim().replaceAll("'", "").replaceAll('"', "");
+          return int.tryParse(clean) ?? clean;
+        }).toList();
+        if (items.isNotEmpty && items.first != "") {
+          final uri = Uri.parse(parameter.defaultValue);
+          final bucket = uri.queryParameters['bucket'];
+          final objectName = uri.queryParameters['objectName'];
+          parameter.setDefaultValue(
+            '${bucket?.toLowerCase()}?objectName=$objectName',
+          );
+        }
+      } else {
+        final content = parameter.annotation.substring(
+          parameter.annotation.indexOf('[') + 1,
+          parameter.annotation.lastIndexOf(']'),
+        );
+        final List<dynamic> items = content.split(',').map((e) {
+          String clean = e.trim().replaceAll("'", "").replaceAll('"', "");
+          return int.tryParse(clean) ?? clean;
+        }).toList();
+        if (items.isNotEmpty && items.first != "") {
+          parameter.setDefaultValue(items[0]);
+        }
       }
     }
     return await reGenerate();
