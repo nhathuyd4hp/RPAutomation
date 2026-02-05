@@ -66,8 +66,16 @@ class _RunFormState extends State<RunForm> {
             if (isAsset) ...[
               (() {
                 final bool hasFile =
-                    _controllers[parameter.name] != null &&
-                    _controllers[parameter.name].toString().isNotEmpty;
+                    _controllers[parameter.name].toString().toLowerCase() ==
+                    parameter.defaultValue
+                        .toString()
+                        .toLowerCase()
+                        .split("?")
+                        .last
+                        .replaceAll("bucket=", "")
+                        .toString()
+                        .replaceAll("&", "?");
+
                 return Expanded(
                   child: Row(
                     spacing: 8,
@@ -140,7 +148,7 @@ class _RunFormState extends State<RunForm> {
                       ] else ...[
                         Expanded(
                           child: TextBox(
-                            placeholder: 'File Not Found: ${parameter.name}',
+                            placeholder: 'File Not Found',
                             placeholderStyle: TextStyle(color: Colors.red),
                             readOnly: true,
                             enabled: true,
@@ -467,6 +475,28 @@ class _RunFormState extends State<RunForm> {
           _idLoading.updateAll((key, value) => false);
         });
       }
+      for (var p in result.parameters) {
+        if (p.annotation.toLowerCase().contains("type.api")) {
+          _idLoading[p.name] = true;
+        } else {
+          _idLoading[p.name] = false;
+        }
+        var defaultValue = p.defaultValue;
+        if (p.annotation.toLowerCase().contains('datetime.datetime')) {
+          _controllers[p.name] =
+              DateTime.tryParse(defaultValue ?? "") ?? DateTime.now();
+        } else if (p.annotation.toLowerCase().contains('int')) {
+          _controllers[p.name] = defaultValue;
+        } else if (p.annotation.toLowerCase().contains('_io.bytesio')) {
+          _controllers[p.name] = null;
+        } else if (p.annotation.toLowerCase().contains('bool')) {
+          _controllers[p.name] = defaultValue
+              ? bool.parse(defaultValue.toString())
+              : false;
+        } else {
+          _controllers[p.name] = defaultValue ?? "";
+        }
+      }
       return result;
     } catch (e) {
       if (mounted) {
@@ -482,28 +512,6 @@ class _RunFormState extends State<RunForm> {
   void initState() {
     super.initState();
     _robotFuture = _initRobotData();
-    for (var p in widget.robot.parameters) {
-      if (p.annotation.toLowerCase().contains("type.api")) {
-        _idLoading[p.name] = true;
-      } else {
-        _idLoading[p.name] = false;
-      }
-      var defaultValue = p.defaultValue;
-      if (p.annotation.toLowerCase().contains('datetime.datetime')) {
-        _controllers[p.name] =
-            DateTime.tryParse(defaultValue ?? "") ?? DateTime.now();
-      } else if (p.annotation.toLowerCase().contains('int')) {
-        _controllers[p.name] = defaultValue;
-      } else if (p.annotation.toLowerCase().contains('_io.bytesio')) {
-        _controllers[p.name] = null;
-      } else if (p.annotation.toLowerCase().contains('bool')) {
-        _controllers[p.name] = defaultValue
-            ? bool.parse(defaultValue.toString())
-            : false;
-      } else {
-        _controllers[p.name] = defaultValue ?? "";
-      }
-    }
   }
 
   @override
